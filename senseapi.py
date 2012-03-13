@@ -127,6 +127,29 @@ class SenseAPI:
 			
 		return response
 		
+##### TO BE TESTED: #####
+
+	def SensorAddToDevice_Parameters(self):
+		return {'device[id]':0, 'device[type]':'', 'device[uuid]':0}
+
+	def SensorAddToDevice(self, sensor_id, parameters):
+		if self.session_id == "":
+			return {'error':'not logged in'}
+
+		headers    		= {'X-SESSION_ID':"{}".format(self.session_id)}
+		params 			= urllib.urlencode(parameters)
+		url 			= '/sensors/{}/device'.format(sensor_id)
+		response_json 	= self.SenseApiCall(url, 'POST', params, headers)
+	
+		try:
+			response = json.loads(response_json)
+		except:
+			return {'error':'notjson'}
+			
+		return response
+		
+##########################
+
 def MD5Hash(password):
 	md5_password = md5.new(password)
 	password_md5 = md5_password.hexdigest()
