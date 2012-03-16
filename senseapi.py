@@ -148,6 +148,21 @@ class SenseAPI:
 			
 		return response
 		
+	def SensorsDataPost(self, parameters):
+		if self.session_id == "":
+			return {'error':'not logged in'}
+
+		headers			= {'X-SESSION_ID':"{}".format(self.session_id)}
+		params			= json.dumps(parameters)
+		response_json 	= self.SenseApiCall('/sensors/data.json', 'POST', params, headers)
+
+		try:
+			response = json.loads(response_json)
+		except:
+			return {'error':'notjson'}
+
+		return response
+	
 ##########################
 
 def MD5Hash(password):
