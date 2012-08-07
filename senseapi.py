@@ -20,6 +20,9 @@ class SenseAPI:
 			self.verbose = verbose
 			return True
 		
+	def somenewfunction(self):
+		print 'hoewoi!'
+
 	def setServer(self, server):
 		if server == 'live':
 			self.server = server
