@@ -1,7 +1,44 @@
 import senseapi
+import json
 
-AUTHENTICATE_SESSIONID      = False
-AUTHENTICATE_OAUTH          = True
+#####################
+# I M P O R T A N T #
+#####################
+# This test script will attempt to open a file to read 
+# credentials with which it will authenticate at 
+# CommonSense. Make sure this file is present!
+try:
+    f = open('credentials.txt', 'r')
+except:
+    print 'pieuw'
+creds = json.load(f)
+f.close()
+print creds
+
+try:
+    username = creds['username']
+    password = creds['password']
+except: 
+    print 'session_id authentication not available!'
+    username = ''
+    password = ''
+    
+try:
+    oauth_token_key         = creds['oauth_token_key']
+    oauth_token_secret      = creds['oauth_token_secret']
+    oauth_consumer_key      = creds['oauth_consumer_key']
+    oauth_consumer_secret   = creds['oauth_consumer_secret']
+except:
+    print 'oauth authentication not available!'
+    oauth_token_key         = ''
+    oauth_token_secret      = ''
+    oauth_consumer_key      = ''
+    oauth_consumer_secret   = ''
+
+
+# Set all things to be tested
+AUTHENTICATE_SESSIONID      = True
+AUTHENTICATE_OAUTH          = False
 
 TEST_GETSENSORS             = False
 TEST_GETSENSORDATA          = False
@@ -18,20 +55,12 @@ api.setServer('live')
 
 # login
 if AUTHENTICATE_SESSIONID:
-    password_md5 = senseapi.MD5Hash('greenhousetest')
-    status, response = api.Login('GreenhouseTest', password_md5)
-#    password_md5 = senseapi.MD5Hash('zovke1984')
-#    status, response = api.Login('freek@almende.com', password_md5)
+    password_md5 = senseapi.MD5Hash(password)
+    status, response = api.Login(username, password_md5)
     print(response)
 
 if AUTHENTICATE_OAUTH:
-    if api.server == 'live':
-        status, response = api.AuthenticateOauth('MmNkN2M4OTg4MDc5NGEzMWFhZmY', 'MjRkODZmYzY5ZTI3NjkzNjg2Mjk', 'ZDljODM4NTI4NTI4NzAzNDIzYjg', 'ZmI3NDJmNmM1ZjE3ZjZhMzgxMjI')
-#        status, response = api.AuthenticateOauth('M2ZjOWQ3NjUyYmFmZGExMWMxYWQ', 'ZTQ4YjkxNTk3NTdiMWJlZjAxYTk', 'ZDljODM4NTI4NTI4NzAzNDIzYjg', 'ZmI3NDJmNmM1ZjE3ZjZhMzgxMjI')
-    elif api.server == 'dev':
-        status, response = api.AuthenticateOauth('', '', 'NDQ1NTJjYTE0NjFkNmExYzI0Njc', 'OTA3NDg3ODRmNGZhYzU4MmNkMWM')
-    else:
-        pass
+    status, response = api.AuthenticateOauth(oauth_token_key, oauth_token_secret, oauth_consumer_key, oauth_consumer_secret)
 
 # get sensor list
 if TEST_GETSENSORS:
