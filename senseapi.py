@@ -9,7 +9,7 @@ class SenseAPI:
 		self.verbose = False
 		self.server  = 'live'
 		self.server_url ='api.sense-os.nl'
-		self.authentication = ''
+		self.authentication = 'not_authenticated'
 		self.oauth_consumer = {}
 		self.oauth_token = {}
 		
@@ -19,9 +19,6 @@ class SenseAPI:
 		else:
 			self.verbose = verbose
 			return True
-		
-	def somenewfunction(self):
-		print 'hoewoi!'
 
 	def setServer(self, server):
 		if server == 'live':
@@ -36,7 +33,7 @@ class SenseAPI:
 			return False
 		
 	def setAuthenticationMethod(self, method):
-		if not (method == 'session_id' or method == 'oauth'):
+		if not (method == 'session_id' or method == 'oauth' or method == 'authenticating_session_id' or method == 'authenticating_oauth' or method == 'not_authenticated'):
 			return False
 		else:
 			self.authentication = method
@@ -45,37 +42,49 @@ class SenseAPI:
 ########################################
 # B A S E  A P I  C A L L  M E T H O D #
 ########################################
-	def SenseApiCall(self, url, method, parameters=None, headers={}, body=''):
-		heads = {}
+	def SenseApiCall(self, url, method, parameters=None, headers={}):
+		heads = headers
+		body = ''
+		http_url = url
 		
-		if self.authentication == 'session_id':
-			if self.session_id == '':
-				self.status = 401
-				return False
+		if self.authentication == 'not_authenticated':
+			self.status = 401
+			return False
+		
+		elif self.authentication == 'authenticating_oauth':
 			heads.update({'X-SESSION_ID':"{0}".format(self.session_id)})
+			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
+			if not parameters is None:
+				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+
+		elif self.authentication == 'authenticating_session_id':
+			heads.update({"Content-type": "application/json", "Accept":"*"})
+			if not parameters is None:
+				body = json.dumps(parameters) 
+
 		elif self.authentication == 'oauth':
 			oauth_url = 'http://{0}{1}'.format(self.server_url, url)
 			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, token=self.oauth_token, http_method=method, http_url=oauth_url)
 			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.oauth_consumer, self.oauth_token)
 			heads.update(oauth_request.to_header())
-		elif self.authentication == '':
-			pass
+			heads.update({"Content-type": "application/json", "Accept":"*"})
+			if not parameters is None:
+				body = json.dumps(parameters)
+			
+		elif self.authentication == 'session_id':
+			heads.update({'X-SESSION_ID':"{0}".format(self.session_id)})
+			heads.update({"Content-type": "application/json", "Accept":"*"})
+			if not parameters is None:
+				body = json.dumps(parameters)
+
 		else:
 			self.status = 418
 			return False
-		
-		if body == '':
-			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
-			if not parameters is None:
-				body = urllib.urlencode(parameters) 
-		else:
-			heads.update({"Content-type": "application/json", "Accept":"*"})
-		heads.update(headers)
-		
+
 		connection 	= httplib.HTTPConnection(self.server_url, timeout=10)
 			
 		try:
-			connection.request(method, url, body, heads);
+			connection.request(method, http_url, body, heads);
 		except socket.timeout: # TODO: check if this doesnt already generate a status
 			self.status = 408
 			return False
@@ -89,7 +98,7 @@ class SenseAPI:
 		
 		if self.verbose:
 			print "===================CALL==================="
-			print "Call: {0} {1}".format(method, url)
+			print "Call: {0} {1}".format(method, http_url)
 			print "Server: {0}".format(self.server)
 			print "Headers: {0}".format(heads)
 			print "Body: {0}".format(body)
@@ -111,24 +120,31 @@ class SenseAPI:
 		self.session_id = session_id
 
 	def AuthenticateSessionId(self, username, password):
+		self.setAuthenticationMethod('authenticating_session_id')
+		self.setAuthenticationMethod('not_authenticated')
+			
 		parameters = {'username':username,'password':password}
 
-		if self.SenseApiCall("/login", "POST", parameters=parameters):
+		if self.SenseApiCall("/login.json", "POST", parameters=parameters):
 			try:
 				response = json.loads(self.response)
 			except: 
+				self.setAuthenticationMethod('not_authenticated')
 				return False, {'error':'notjson'}
 			try: 
 				self.session_id = response['session_id']
 				self.authentication = 'session_id'		
 				return True, response
 			except: 
+				self.setAuthenticationMethod('not_authenticated')
 				return False, {'error':'no session id'}
 		else:
+			self.setAuthenticationMethod('not_authenticated')
 			return False, {'error':self.status}
 		
 	def LogoutSessionId(self):
-		if self.SenseApiCall('/logout', 'POST'):
+		if self.SenseApiCall('/logout.json', 'POST'):
+			self.setAuthenticationMethod('not_authenticated')
 			return True, {}
 		else:
 			return False, {'error':self.status}
@@ -148,7 +164,7 @@ class SenseAPI:
 		self.oauth_consumer = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
 		self.oauth_token 	= oauth.OAuthToken(oauth_token_key, oauth_token_secret)
 		self.authentication = 'oauth'
-		if self.SenseApiCall('/users/current', 'GET'):
+		if self.SenseApiCall('/users/current.json', 'GET'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -164,6 +180,8 @@ class SenseAPI:
 		if self.session_id == '':
 			return False, {'error':'not logged in'}
 		
+		self.setAuthenticationMethod('authenticating_oauth')
+		
 	# first obtain a request token
 		self.oauth_consumer = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
 		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, callback=oauth_callback, http_url='http://api.sense-os.nl/oauth/request_token')
@@ -178,6 +196,7 @@ class SenseAPI:
 			response = urlparse.parse_qs(self.response)
 			self.oauth_token = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
 		else:
+			self.setAuthenticationMethod('session_id')
 			return False, {'error':'error getting request token'}
 		
 	#second, automatically get authorization for the application
@@ -190,8 +209,10 @@ class SenseAPI:
 						response = urlparse.parse_qs(header[1])
 						self.oauth_token.verifier = response['oauth_verifier'][0]
 			else:
+				self.setAuthenticationMethod('session_id')
 				return False, {'error':'error authorizing application'}
 		else:
+			self.setAuthenticationMethod('session_id')
 			return False, {'error':'error authorizing application'}
 		
 	#third, obtain access token
@@ -206,8 +227,10 @@ class SenseAPI:
 		if self.SenseApiCall('/oauth/access_token', 'GET', parameters=parameters):
 			response = urlparse.parse_qs(self.response)
 			self.oauth_token = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
+			self.setAuthenticationMethod('oauth')
 			return True, {'oauth_token':response['oauth_token'][0], 'oauth_token_secret':response['oauth_token_secret'][0]}
 		else:
+			self.setAuthenticationMethod('session_id')
 			return False, {'error':'error getting access token'}		
 
 	def OauthGetTokExpir (self, duration):
@@ -234,29 +257,10 @@ class SenseAPI:
 		
 		url = ''
 		if parameters is None:
-			url = '/sensors/{0}'.format(sensor_id)
-		else:
-			url = '/sensors'
-			
-		if self.SenseApiCall(url, 'GET', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
-		else:
-			return False, {'error':self.status}
-				
-	def SensorGetJson(self, parameters=None, sensor_id=0):
-		if parameters is None and sensor_id is 0:
-			return False, {'error':'no arguments'}
-		
-		url = ''
-		if parameters is None:
 			url = '/sensors/{0}.json'.format(sensor_id)
 		else:
 			url = '/sensors.json'
-		
+			
 		if self.SenseApiCall(url, 'GET', parameters=parameters):
 			try:
 				response = json.loads(self.response)
@@ -265,14 +269,12 @@ class SenseAPI:
 				return True, {}
 		else:
 			return False, {'error':self.status}
-	
-			
 				
 	def SensorsPost_Parameters(self):
-		return {'sensor[name]':'', 'sensor[display_name]':'', 'sensor[device_type]':'', 'sensor[pager_type]':'', 'sensor[data_type]':'', 'sensor[data_structure]':''}
+		return {'sensor': {'name':'', 'display_name':'', 'device_type':'', 'pager_type':'', 'data_type':'', 'data_structure':''}}
 		
 	def SensorsPost(self, parameters):
-		if self.SenseApiCall('/sensors', 'POST', parameters=parameters):
+		if self.SenseApiCall('/sensors.json', 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -280,20 +282,7 @@ class SenseAPI:
 				return True, {}
 		else:
 			return False, {'error':self.status}
-
-	def SensorsPostJson_Parameters(self):
-		return {'sensor':{'name':'', 'display_name':'', 'device_type':'', 'pager_type':'', 'data_type':'', 'data_structure':''}}
-			
-	def SensorsPostJson (self, parameters):
-		if self.SenseApiCall('/sensors.json', 'POST', body=json.dumps(parameters)):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
-		else:
-			return False, {'error':self.status}
-			
+		
 ########################
 # S E N S O R  D A T A #
 ########################
@@ -301,7 +290,7 @@ class SenseAPI:
 		return {'page':0, 'per_page':100, 'start_date':0, 'end_date':4294967296, 'date':0, 'next':0, 'last':0, 'sort':'ASC', 'total':1}
 		
 	def SensorDataGet(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/data'.format(sensor_id), 'GET', parameters=parameters):
+		if self.SenseApiCall('/sensors/{0}/data.json'.format(sensor_id), 'GET', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -311,7 +300,7 @@ class SenseAPI:
 			return False, {'error':self.status} 
 	
 	def SensorDataPost(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/data.json'.format(sensor_id), 'POST', body=json.dumps(parameters)):
+		if self.SenseApiCall('/sensors/{0}/data.json'.format(sensor_id), 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -323,11 +312,11 @@ class SenseAPI:
 ###################
 # S E R V I C E S #
 ###################
-	def ServicesPostJson_Parameters (self):
+	def ServicesPost_Parameters (self):
 		return {'service':{'name':'math_service', 'data_fields':['sensor']}, 'sensor':{'name':'', 'device_type':''}}
 
-	def ServicesPostJson (self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'POST', body=json.dumps(parameters)):
+	def ServicesPost (self, sensor_id, parameters):
+		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				for header in self.headers:
@@ -341,7 +330,7 @@ class SenseAPI:
 			return False, {'error':self.status}
 		
 	def ServicesDelete (self, sensor_id, service_id):
-		if self.SenseApiCall('/sensors/{0}/services/{1}'.format(sensor_id, service_id), 'DELETE'):
+		if self.SenseApiCall('/sensors/{0}/services/{1}.json'.format(sensor_id, service_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -350,11 +339,11 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 		
-	def ServicesSetExpressionJson_Parameters (self):
+	def ServicesSetExpression_Parameters (self):
 			return {'parameters':[]}
 		
-	def ServicesSetExpressionJson (self, sensor_id, service_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/services/{1}/SetExpression.json'.format(sensor_id, service_id), 'POST', body=json.dumps(parameters)):
+	def ServicesSetExpression (self, sensor_id, service_id, parameters):
+		if self.SenseApiCall('/sensors/{0}/services/{1}/SetExpression.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -367,7 +356,7 @@ class SenseAPI:
 # U S E R S #
 #############
 	def UsersGetCurrent (self):
-		if self.SenseApiCall('/users/current', 'GET'):
+		if self.SenseApiCall('/users/current.json', 'GET'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -376,15 +365,14 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 		
-##### TO BE TESTED: #####
 ###############
 # E V E N T S #
 ###############
 	def EventsNotificationsGet(self, event_notification_id = -1):
 		if event_notification_id == -1:
-			url = '/events/notifications'
+			url = '/events/notifications.json'
 		else:
-			url = '/events/notifications/{0}'.format(event_notification_id)
+			url = '/events/notifications/{0}.json'.format(event_notification_id)
 			
 		if self.SenseApiCall(url, 'GET'):
 			try:
@@ -396,7 +384,7 @@ class SenseAPI:
 			return False, {'error':self.status}
 
 	def EventsNotificationsDel(self, event_notification_id):
-		if self.SenseApiCall('/events/notifications/{0}'.format(event_notification_id), 'DELETE'):
+		if self.SenseApiCall('/events/notifications/{0}.json'.format(event_notification_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -409,7 +397,7 @@ class SenseAPI:
 		return {'event_notification':{'name':'my_event', 'event':'add_sensor', 'notification_id':0, 'priority':0}}
 	
 	def EventsNotificationsPost(self, parameters):
-		if self.SenseApiCall('/events/notifications.json', 'POST', body=json.dumps(parameters)):
+		if self.SenseApiCall('/events/notifications.json', 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -418,15 +406,14 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
-
 #############################
 # N O T I F I C A T I O N S #
 #############################
 	def NotificationsGet(self, notification_id=-1):
 		if notification_id == -1:
-			url = '/notifications'
+			url = '/notifications.json'
 		else:
-			url = '/notifications/{0}'.format(notification_id)
+			url = '/notifications/{0}.json'.format(notification_id)
 			
 		if self.SenseApiCall(url, 'GET'):
 			try:
@@ -438,7 +425,7 @@ class SenseAPI:
 			return False, {'error':self.status}
 
 	def NotificationsDel(self, notification_id):
-		if self.SenseApiCall('/notifications/{0}'.format(notification_id), 'DELETE'):
+		if self.SenseApiCall('/notifications/{0}.json'.format(notification_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -451,7 +438,7 @@ class SenseAPI:
 		return {'notification':{'type':'url, email', 'text':'herpaderp', 'destination':'http://api.sense-os.nl/scripts'}}
 	
 	def NotificationsPost(self, parameters):
-		if self.SenseApiCall('/notifications.json', 'POST', body=json.dumps(parameters)):
+		if self.SenseApiCall('/notifications.json', 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -460,7 +447,6 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
-
 #################
 # D E V I C E S #
 #################
@@ -468,7 +454,7 @@ class SenseAPI:
 		return {'device[id]':0, 'device[type]':'', 'device[uuid]':0}
 
 	def SensorAddToDevice(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/device'.format(sensor_id), 'POST', parameters=parameters):
+		if self.SenseApiCall('/sensors/{0}/device.json'.format(sensor_id), 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -479,7 +465,7 @@ class SenseAPI:
 		
 		
 	def SensorsDataPost(self, parameters):
-		if self.SenseApiCall('/sensors/data.json', 'POST', body=json.dumps(parameters)):
+		if self.SenseApiCall('/sensors/data.json', 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -495,12 +481,4 @@ def MD5Hash(password):
 	md5_password = md5.new(password)
 	password_md5 = md5_password.hexdigest()
 	return password_md5
-	
-	
-def CheckForError(response):
-	try:
-		error = response['error']
-		return True
-	except KeyError:
-		return False
 	
