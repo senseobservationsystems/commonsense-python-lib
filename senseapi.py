@@ -67,16 +67,23 @@ class SenseAPI:
 			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, token=self.oauth_token, http_method=method, http_url=oauth_url)
 			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.oauth_consumer, self.oauth_token)
 			heads.update(oauth_request.to_header())
-			heads.update({"Content-type": "application/json", "Accept":"*"})
 			if not parameters is None:
-				body = json.dumps(parameters)
+				if method == 'GET' or method == 'DELETE':
+					heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
+					http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+				else:
+					heads.update({"Content-type": "application/json", "Accept":"*"})
+					body = json.dumps(parameters)
 			
 		elif self.authentication == 'session_id':
 			heads.update({'X-SESSION_ID':"{0}".format(self.session_id)})
-			heads.update({"Content-type": "application/json", "Accept":"*"})
 			if not parameters is None:
-				body = json.dumps(parameters)
-
+				if method == 'GET' or method == 'DELETE':
+					heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
+					http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+				else:
+					heads.update({"Content-type": "application/json", "Accept":"*"})
+					body = json.dumps(parameters)
 		else:
 			self.status = 418
 			return False
@@ -121,7 +128,6 @@ class SenseAPI:
 
 	def AuthenticateSessionId(self, username, password):
 		self.setAuthenticationMethod('authenticating_session_id')
-		self.setAuthenticationMethod('not_authenticated')
 			
 		parameters = {'username':username,'password':password}
 
@@ -451,7 +457,7 @@ class SenseAPI:
 # D E V I C E S #
 #################
 	def SensorAddToDevice_Parameters(self):
-		return {'device[id]':0, 'device[type]':'', 'device[uuid]':0}
+		return {'device':{'id':0, 'type':'', 'uuid':0}}
 
 	def SensorAddToDevice(self, sensor_id, parameters):
 		if self.SenseApiCall('/sensors/{0}/device.json'.format(sensor_id), 'POST', parameters=parameters):

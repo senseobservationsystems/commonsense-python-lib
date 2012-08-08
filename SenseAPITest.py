@@ -24,10 +24,10 @@ except:
     password = ''
     
 try:
-    oauth_token_key         = creds['oauth_token_key']
-    oauth_token_secret      = creds['oauth_token_secret']
-    oauth_consumer_key      = creds['oauth_consumer_key']
-    oauth_consumer_secret   = creds['oauth_consumer_secret']
+    oauth_token_key         = str(creds['oauth_token_key'])
+    oauth_token_secret      = str(creds['oauth_token_secret'])
+    oauth_consumer_key      = str(creds['oauth_consumer_key'])
+    oauth_consumer_secret   = str(creds['oauth_consumer_secret'])
 except:
     print 'oauth authentication not available!'
     oauth_token_key         = ''
@@ -41,10 +41,10 @@ AUTHENTICATE_SESSIONID      = True
 AUTHENTICATE_OAUTH          = False
 
 TEST_GETSENSORS             = False
-TEST_GETSENSORDATA          = False
-TEST_POSTSENSORS            = True
+TEST_GETSENSORDATA          = True
+TEST_POSTSENSORS            = False
 TEST_POSTSENSORDATA         = False
-TEST_CREATESERVICE          = True
+TEST_CREATESERVICE          = False
 TEST_CREATENOTIFICATION     = False
 TEST_OAUTHAUTHORIZATION     = False 
 TEST_OAUTHAUTHENTICATION    = False
@@ -56,7 +56,7 @@ api.setServer('live')
 # login
 if AUTHENTICATE_SESSIONID:
     password_md5 = senseapi.MD5Hash(password)
-    status, response = api.Login(username, password_md5)
+    status, response = api.AuthenticateSessionId(username, password_md5)
     print(response)
 
 if AUTHENTICATE_OAUTH:
@@ -78,16 +78,16 @@ if TEST_GETSENSORDATA:
     del parameters['next']
     parameters['start_date'] = 1331215067
     parameters['end_date'] = 1331215667
-    status, response = api.SensorDataGet(113522, parameters)
+    status, response = api.SensorDataGet(150776, parameters)
     print response
 
 # post a sensor
 if TEST_POSTSENSORS:
-    parameters = api.SensorsPostJson_Parameters()
+    parameters = api.SensorsPost_Parameters()
     parameters['sensor']['name'] = 'test_sensor'
     parameters['sensor']['device_type'] = 'gyrocopter'
     parameters['sensor']['data_type'] = 'float'
-    status, response = api.SensorsPostJson(parameters)
+    status, response = api.SensorsPost(parameters)
     print response
     sensor_id = response['sensor']['id']
     
@@ -105,19 +105,19 @@ if TEST_POSTSENSORDATA:
 #parameters['sensor[device_type]'] = 'ChargeNeeded'
 if TEST_CREATESERVICE:
     parameters = {'service':{'name':'math_service', 'data_fields':['level']}, 'sensor':{'name':'ChargeNeeded', 'device_type':'ChargeNeeded'}}
-    status, response = api.ServicesPostJson(sensor_id, parameters)
+    status, response = api.ServicesPost(sensor_id, parameters)
     print response
     service_id = response['service[id]']
 # setup the expression
-    parameters = api.ServicesSetExpressionJson_Parameters()
+    parameters = api.ServicesSetExpression_Parameters()
     parameters['parameters'] = ["_113522_battery_sensor.level"]
-    status, response = api.ServicesSetExpressionJson(sensor_id, service_id, parameters)
+    status, response = api.ServicesSetExpression(sensor_id, service_id, parameters)
     print response
 # add it to a device
     parameters = api.SensorAddToDevice_Parameters()
-    parameters['device[type]'] = 'redXI'
-    parameters['device[uuid]'] = 'bla:diebla'
-    del parameters['device[id]']
+    parameters['device']['type'] = 'redXI'
+    parameters['device']['uuid'] = 'bla:diebla'
+    del parameters['device']['id']
     res, resp = api.SensorAddToDevice(service_id, parameters)
 
 # create a notification for new sensors
