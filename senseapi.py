@@ -345,7 +345,7 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 		
-	def ServicesSetExpression_Parameters (self):
+	def ServicesSet_Parameters (self):
 			return {'parameters':[]}
 		
 	def ServicesSetExpression (self, sensor_id, service_id, parameters):
@@ -357,6 +357,17 @@ class SenseAPI:
 				return True, {}
 		else:
 			return False, {'error':self.status}
+
+	def ServicesSetUserDataTimestamp(self, sensor_id, service_id, parameters):
+		if self.SenseApiCall('/sensor/{0}/services/{1}/SetUseDataTimestamp.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+			
 
 #############
 # U S E R S #
