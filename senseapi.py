@@ -318,6 +318,17 @@ class SenseAPI:
 ###################
 # S E R V I C E S #
 ###################
+
+	def ServicesGet (self, sensor_id):
+		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'GET'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
 	def ServicesPost_Parameters (self):
 		return {'service':{'name':'math_service', 'data_fields':['sensor']}, 'sensor':{'name':'', 'device_type':''}}
 
@@ -358,8 +369,8 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
-	def ServicesSetUserDataTimestamp(self, sensor_id, service_id, parameters):
-		if self.SenseApiCall('/sensor/{0}/services/{1}/SetUseDataTimestamp.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
+	def ServicesSetUseDataTimestamp(self, sensor_id, service_id, parameters):
+		if self.SenseApiCall('/sensors/{0}/services/{1}/SetUseDataTimestamp.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
 			try:
 				response = json.loads(self.response)
 				return True, response

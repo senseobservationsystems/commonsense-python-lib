@@ -41,17 +41,17 @@ AUTHENTICATE_SESSIONID      = True
 AUTHENTICATE_OAUTH          = False
 
 TEST_GETSENSORS             = False
-TEST_GETSENSORDATA          = True
-TEST_POSTSENSORS            = False
+TEST_GETSENSORDATA          = False
+TEST_POSTSENSORS            = True
 TEST_POSTSENSORDATA         = False
-TEST_CREATESERVICE          = False
+TEST_CREATESERVICE          = True
 TEST_CREATENOTIFICATION     = False
 TEST_OAUTHAUTHORIZATION     = False 
 TEST_OAUTHAUTHENTICATION    = False
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-api.setServer('live')
+api.setServer('dev')
 
 # login
 if AUTHENTICATE_SESSIONID:
