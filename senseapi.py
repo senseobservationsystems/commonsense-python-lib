@@ -258,7 +258,7 @@ class SenseAPI:
 		return {'page':0, 'per_page':100, 'shared':0, 'owned':0, 'physical':0, 'details':'full'}
 		
 	def SensorsGet(self, parameters=None, sensor_id=-1):
-		if parameters is None and sensor_id --1:
+		if parameters is None and sensor_id == -1:
 			return False, {'error':'no arguments'}
 		
 		url = ''
@@ -268,6 +268,16 @@ class SenseAPI:
 			url = '/sensors.json'
 			
 		if self.SenseApiCall(url, 'GET', parameters=parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+				
+	def SensorsDelete(self, sensor_id):
+		if self.SenseApiCall('/sensors/{0}.json'.format(sensor_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
 				return True, response
@@ -314,6 +324,16 @@ class SenseAPI:
 				return True, {}
 		else:
 			return False, {'error':self.status}
+
+	def SensorsDataPost(self, parameters):
+		if self.SenseApiCall('/sensors/data.json', 'POST', parameters=parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':'{0}: {1}'.format(self.status, self.response)}
 
 ###################
 # S E R V I C E S #
@@ -609,17 +629,6 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status} 
 		
-		
-	def SensorsDataPost(self, parameters):
-		if self.SenseApiCall('/sensors/data.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
-		else:
-			return False, {'error':'{0}: {1}'.format(self.status, self.response)}
-	
 ###################################
 # N O N  C L A S S  M E T H O D S #
 ###################################
