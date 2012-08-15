@@ -44,14 +44,15 @@ TEST_GETSENSORS             = False
 TEST_GETSENSORDATA          = False
 TEST_POSTSENSORS            = True
 TEST_POSTSENSORDATA         = False
-TEST_CREATESERVICE          = True
+TEST_CREATESERVICE          = False
 TEST_CREATENOTIFICATION     = False
+TEST_CREATETRIGGER          = True
 TEST_OAUTHAUTHORIZATION     = False 
 TEST_OAUTHAUTHENTICATION    = False
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-api.setServer('dev')
+api.setServer('live')
 
 # login
 if AUTHENTICATE_SESSIONID:
@@ -120,16 +121,44 @@ if TEST_CREATESERVICE:
     del parameters['device']['id']
     res, resp = api.SensorAddToDevice(service_id, parameters)
 
-# create a notification for new sensors
+if TEST_CREATETRIGGER:
+    #create an inactivity trigger
+    parameters = api.TriggersPost_Parameters()
+    parameters['trigger']['name'] = 'the signal'
+    parameters['trigger']['inactivity'] = 60
+    del parameters['trigger']['expression']
+    res, resp = api.TriggersPost(parameters)
+    print resp
+    trigger_id = resp['trigger']['id']
+    # connect trigger to sensor
+    parameters = api.SensorsTriggersPost_Parameters()
+    parameters['trigger']['id'] = trigger_id
+    res, resp = api.SensorsTriggersPost(sensor_id, parameters)
+    print resp
+    # create notification 
+    parameters = api.NotificationsPost_Parameters()
+    parameters['notification']['type'] = 'email'
+    parameters['notification']['text'] = 'inactivity!'
+    parameters['notification']['destination'] = 'freek@sense-os.nl'
+    res, resp = api.NotificationsPost(parameters)
+    print resp
+    notification_id = resp['notification']['id']
+    # attach notification to sensor-trigger combination
+    parameters = api.SensorsTriggersNotificationsPost_Parameters()
+    parameters['notification']['id'] = notification_id
+    res, resp = api.SensorsTriggersNotificationsPost(sensor_id, trigger_id, parameters)
+    print resp
+
 if TEST_CREATENOTIFICATION:
+    # create a notification for new sensors
     parameters = api.NotificationsPost_Parameters()
     parameters['notification']['type'] = 'url'
     parameters['notification']['text'] = 'herpaderping'
-    parameters['notification']['destination'] = 'http://data.sense-os.nl:9012/scripts/ClimateSystemMap'
+    parameters['notification']['destination'] = 'http://climatemap.sense-os.nl'
     status, response = api.NotificationsPost(parameters)
     print response
     notification_id = response['notification']['id']    
-# setup the event
+    # setup the event
     status, parameters = api.EventsNotificationsPost_Parameters()
     parameters['event_notification']['name'] = 'new sensor event'
     parameters['event_notification']['event'] = 'add_sensor'

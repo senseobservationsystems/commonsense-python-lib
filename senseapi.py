@@ -257,8 +257,8 @@ class SenseAPI:
 	def SensorsGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'shared':0, 'owned':0, 'physical':0, 'details':'full'}
 		
-	def SensorsGet(self, parameters=None, sensor_id=0):
-		if parameters is None and sensor_id is 0:
+	def SensorsGet(self, parameters=None, sensor_id=-1):
+		if parameters is None and sensor_id --1:
 			return False, {'error':'no arguments'}
 		
 		url = ''
@@ -318,7 +318,6 @@ class SenseAPI:
 ###################
 # S E R V I C E S #
 ###################
-
 	def ServicesGet (self, sensor_id):
 		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'GET'):
 			try:
@@ -411,7 +410,7 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
-	def EventsNotificationsDel(self, event_notification_id):
+	def EventsNotificationsDelete(self, event_notification_id):
 		if self.SenseApiCall('/events/notifications/{0}.json'.format(event_notification_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
@@ -434,6 +433,125 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
+###################
+# T R I G G E R S #
+###################
+	def TriggersGet(self, trigger_id=-1):
+		if trigger_id == -1:
+			url = '/notifications.json'
+		else:
+			url = '/notifications/{0}.json'.format(trigger_id)
+		if self.SenseApiCall(url, 'GET'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
+	def TriggersDelete(self, trigger_id):
+		if self.SenseApiCall('/triggers/{0}'.format(trigger_id), 'DELETE'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
+	def TriggersPost_Parameters(self):
+		return {'trigger':{'name':'', 'expression':'', 'inactivity':0}}
+
+	def TriggersPost(self, parameters):
+		if self.SenseApiCall('/triggers.json', 'POST', parameters=parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
+##################################
+# S E N S O R S  T R I G G E R S #
+##################################
+	def SensorsTriggersGet(self, sensor_id, trigger_id=-1):
+		if trigger_id == -1:
+			url = '/sensors/{0}/triggers.json'.format(sensor_id)
+		else:
+			url = '/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id)
+			
+		if self.SenseApiCall(url, 'GET'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+	
+	def SensorsTriggersDelete(self, sensor_id, trigger_id):
+		if self.SenseApiCall('/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id), 'DELETE'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+		
+	def SensorsTriggersPost_Parameters(self):
+		return {'trigger':{'id':0}}
+		
+	def SensorsTriggersPost(self, sensor_id, parameters):
+		if self.SenseApiCall('/sensors/{0}/triggers'.format(sensor_id), 'POST', parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
+#TODO: SensorsTriggerPut
+
+#############################################################
+# S E N S O R S  T R I G G E R S  N O T I F I C A T I O N S #
+#############################################################
+	def SensorsTriggersNotificationsGet(self, sensor_id, trigger_id):
+		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'GET'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+
+	def SensorsTriggersNotificationsDelete(self, sensor_id, trigger_id, notification_id):
+		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications/{2}.json'.format(sensor_id, trigger_id, notification_id), 'DELETE'):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+	
+	def SensorsTriggersNotificationsPost_Parameters(self):
+		return {'notification':{'id':0}}
+		
+	def SensorsTriggersNotificationsPost(self, sensor_id, trigger_id, parameters):
+		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'POST', parameters=parameters):
+			try:
+				response = json.loads(self.response)
+				return True, response
+			except:
+				return True, {}
+		else:
+			return False, {'error':self.status}
+		
 #############################
 # N O T I F I C A T I O N S #
 #############################
@@ -452,7 +570,7 @@ class SenseAPI:
 		else:
 			return False, {'error':self.status}
 
-	def NotificationsDel(self, notification_id):
+	def NotificationsDelete(self, notification_id):
 		if self.SenseApiCall('/notifications/{0}.json'.format(notification_id), 'DELETE'):
 			try:
 				response = json.loads(self.response)
