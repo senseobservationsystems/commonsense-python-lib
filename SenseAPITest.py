@@ -125,8 +125,8 @@ if TEST_CREATETRIGGER:
     #create an inactivity trigger
     parameters = api.TriggersPost_Parameters()
     parameters['trigger']['name'] = 'the signal'
-    parameters['trigger']['inactivity'] = 60
-    del parameters['trigger']['expression']
+    del parameters['trigger']['inactivity']
+    parameters['trigger']['expression'] = 'sensor_data_value == "true"'
     res, resp = api.TriggersPost(parameters)
     print resp
     trigger_id = resp['trigger']['id']
@@ -148,6 +148,10 @@ if TEST_CREATETRIGGER:
     parameters['notification']['id'] = notification_id
     res, resp = api.SensorsTriggersNotificationsPost(sensor_id, trigger_id, parameters)
     print resp
+
+    res, resp = api.TriggersGet()
+    print resp
+    
 
 if TEST_CREATENOTIFICATION:
     # create a notification for new sensors
