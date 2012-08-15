@@ -458,9 +458,9 @@ class SenseAPI:
 ###################
 	def TriggersGet(self, trigger_id=-1):
 		if trigger_id == -1:
-			url = '/notifications.json'
+			url = '/triggers.json'
 		else:
-			url = '/notifications/{0}.json'.format(trigger_id)
+			url = '/triggers/{0}.json'.format(trigger_id)
 		if self.SenseApiCall(url, 'GET'):
 			try:
 				response = json.loads(self.response)
