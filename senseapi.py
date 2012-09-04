@@ -88,7 +88,7 @@ class SenseAPI:
 			self.status = 418
 			return False
 
-		connection 	= httplib.HTTPConnection(self.server_url, timeout=10)
+		connection 	= httplib.HTTPSConnection(self.server_url, timeout=60)
 			
 		try:
 			connection.request(method, http_url, body, heads);

@@ -43,10 +43,10 @@ AUTHENTICATE_OAUTH          = False
 TEST_GETSENSORS             = False
 TEST_GETSENSORDATA          = False
 TEST_POSTSENSORS            = True
-TEST_POSTSENSORDATA         = False
+TEST_POSTSENSORDATA         = True
 TEST_CREATESERVICE          = False
 TEST_CREATENOTIFICATION     = False
-TEST_CREATETRIGGER          = True
+TEST_CREATETRIGGER          = False
 TEST_OAUTHAUTHORIZATION     = False 
 TEST_OAUTHAUTHENTICATION    = False
 
@@ -125,8 +125,8 @@ if TEST_CREATETRIGGER:
     #create an inactivity trigger
     parameters = api.TriggersPost_Parameters()
     parameters['trigger']['name'] = 'the signal'
-    del parameters['trigger']['inactivity']
-    parameters['trigger']['expression'] = 'sensor_data_value == "true"'
+    parameters['trigger']['inactivity'] = 60
+    del parameters['trigger']['expression']
     res, resp = api.TriggersPost(parameters)
     print resp
     trigger_id = resp['trigger']['id']
