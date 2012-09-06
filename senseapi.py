@@ -92,16 +92,15 @@ class SenseAPI:
 			
 		try:
 			connection.request(method, http_url, body, heads);
-		except socket.timeout: # TODO: check if this doesnt already generate a status
+			result = connection.getresponse(); 
+			connection.close()		
+		except: # TODO: check if this doesnt already generate a status
 			self.status = 408
 			return False
-		
-		result = connection.getresponse(); 
+
 		self.response 	= result.read()
 		self.status		= result.status
 		self.headers	= result.getheaders()
-		
-		connection.close()
 		
 		if self.verbose:
 			print "===================CALL==================="
