@@ -1,5 +1,5 @@
 """ 
-Copyright (©) [2012] Sense Observation Systems B.V.
+Copyright (C) [2012] Sense Observation Systems B.V.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -55,15 +55,14 @@ except:
 AUTHENTICATE_SESSIONID      = True
 AUTHENTICATE_OAUTH          = False
 
-TEST_GETSENSORS             = False
-TEST_GETSENSORDATA          = False
+TEST_GETSENSORS             = True
+TEST_GETSENSORDATA          = True
 TEST_POSTSENSORS            = True
 TEST_POSTSENSORDATA         = True
 TEST_CREATESERVICE          = False
-TEST_CREATENOTIFICATION     = False
+TEST_CREATEEVENT            = False
 TEST_CREATETRIGGER          = False
 TEST_OAUTHAUTHORIZATION     = False 
-TEST_OAUTHAUTHENTICATION    = False
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
@@ -72,144 +71,198 @@ api.setServer('live')
 # login
 if AUTHENTICATE_SESSIONID:
     password_md5 = senseapi.MD5Hash(password)
-    status, response = api.AuthenticateSessionId(username, password_md5)
-    print(response)
+    status = api.AuthenticateSessionId(username, password_md5)
+    print api.getResponse()
 
 if AUTHENTICATE_OAUTH:
-    status, response = api.AuthenticateOauth(oauth_token_key, oauth_token_secret, oauth_consumer_key, oauth_consumer_secret)
+    status = api.AuthenticateOauth(oauth_token_key, oauth_token_secret, oauth_consumer_key, oauth_consumer_secret)
 
 # get sensor list
 if TEST_GETSENSORS:
-    parameters = api.SensorsGet_Parameters()
-    parameters['owned'] = 1
-    parameters['physical'] = 1
-    parameters['page'] = 0
-    status, response = api.SensorsGet(parameters)
-    print(response)
+    print " "
+    print "#####################################"
+    print "Test SensorsGet"
+    
+    page = 0;
+    while True:
+        if api.SensorsGet({'page':page, 'owned':1, 'details':'full'}):
+            r = json.loads(api.getResponse())
+            print "page: {0}: {1}".format(page, r['sensors'])
+            if len(r['sensors']) < 100:
+                break
+            page += 1
+        else:
+            break
+        
+    print "#####################################"
 
 # get sensor data 
 if TEST_GETSENSORDATA:
-    parameters = api.SensorDataGet_Parameters()
-    del parameters['date']
-    del parameters['next']
-    parameters['start_date'] = 1331215067
-    parameters['end_date'] = 1331215667
-    status, response = api.SensorDataGet(150776, parameters)
-    print response
+    print " "
+    print "#####################################"
+    print "Test SensorDataGet:"
+    
+    if api.SensorDataGet(150776, {'start_date':1331215067, 'end_date':1331215667}):
+        print api.getResponse()
 
-# post a sensor
+    print "#####################################"
+
 if TEST_POSTSENSORS:
-    parameters = api.SensorsPost_Parameters()
-    parameters['sensor']['name'] = 'test_sensor'
-    parameters['sensor']['device_type'] = 'gyrocopter'
-    parameters['sensor']['data_type'] = 'float'
-    status, response = api.SensorsPost(parameters)
-    print response
-    sensor_id = response['sensor']['id']
+    print " "
+    print "#####################################"
+    print "Test SensorsPost:"
+    
+    if api.SensorsPost({'sensor':{'name':'test_sensor', 'device_type':'gyrocopter', 'data_type':'float'}}):
+        print api.getResponse()
+        sensor_id = json.loads(api.getResponse())['sensor']['id']
+    
+    print "#####################################"
     
 if TEST_POSTSENSORDATA:
-    data = {'data':[{'value':10, 'date':1343055000},{'value':11, 'date':1343055001}]}
-    status, response = api.SensorDataPost(sensor_id, data)
-    print response
+    print " "
+    print "#####################################"
+    print "Test SensorDataPost:"
 
-# post sensor data
+    data = {'data':[{'value':10, 'date':1343055000},{'value':11, 'date':1343055001}]}
+    if api.SensorDataPost(sensor_id, data):
+        print api.getResponse()
+
+    print "#####################################"
 
 # create a service for battery sensor
-#parameters = api.ServicesPost_Parameters()
-#parameters['service[data_fields]'] = ['level']
-#parameters['sensor[name]'] = 'ChargeNeeded'
-#parameters['sensor[device_type]'] = 'ChargeNeeded'
 if TEST_CREATESERVICE:
+    print " "
+    print "#####################################"
+    print "Test ServicesPost:"
+    
     parameters = {'service':{'name':'math_service', 'data_fields':['level']}, 'sensor':{'name':'ChargeNeeded', 'device_type':'ChargeNeeded'}}
-    status, response = api.ServicesPost(sensor_id, parameters)
-    print response
-    service_id = response['service[id]']
+    if api.ServicesPost(sensor_id, parameters):
+        print api.getResponse()
+        service_id = json.loads(api.getResponse)['service[id]']
+        
+    print "#####################################"
+    
 # setup the expression
-    parameters = api.ServicesSetExpression_Parameters()
-    parameters['parameters'] = ["_113522_battery_sensor.level"]
-    status, response = api.ServicesSetExpression(sensor_id, service_id, parameters)
-    print response
+    print " "
+    print "#####################################"
+    print "Test ServicesSetExpression:"
+    
+    parameters = {'parameters':['_113522_battery_sensor.level']}
+    if api.ServicesSetExpression(sensor_id, service_id, parameters):
+        print api.getResponse()
+    
+    print "#####################################"
+    
 # add it to a device
-    parameters = api.SensorAddToDevice_Parameters()
-    parameters['device']['type'] = 'redXI'
-    parameters['device']['uuid'] = 'bla:diebla'
-    del parameters['device']['id']
-    res, resp = api.SensorAddToDevice(service_id, parameters)
+    print " "
+    print "#####################################"
+    print "Test SensorAddToDevice:"
+    
+    parameters = {'device':{'type':'rexXI', 'uuid':'bla:diebla'}}
+    if api.SensorAddToDevice(service_id, parameters):
+        print api.getResponse()
+        device_id = json.loads(api.getResponse())['device']['id']
+
+    print "#####################################"
 
 if TEST_CREATETRIGGER:
-    #create an inactivity trigger
-    parameters = api.TriggersPost_Parameters()
-    parameters['trigger']['name'] = 'the signal'
-    parameters['trigger']['inactivity'] = 60
-    del parameters['trigger']['expression']
-    res, resp = api.TriggersPost(parameters)
-    print resp
-    trigger_id = resp['trigger']['id']
-    # connect trigger to sensor
-    parameters = api.SensorsTriggersPost_Parameters()
-    parameters['trigger']['id'] = trigger_id
-    res, resp = api.SensorsTriggersPost(sensor_id, parameters)
-    print resp
-    # create notification 
-    parameters = api.NotificationsPost_Parameters()
-    parameters['notification']['type'] = 'email'
-    parameters['notification']['text'] = 'inactivity!'
-    parameters['notification']['destination'] = 'freek@sense-os.nl'
-    res, resp = api.NotificationsPost(parameters)
-    print resp
-    notification_id = resp['notification']['id']
-    # attach notification to sensor-trigger combination
-    parameters = api.SensorsTriggersNotificationsPost_Parameters()
-    parameters['notification']['id'] = notification_id
-    res, resp = api.SensorsTriggersNotificationsPost(sensor_id, trigger_id, parameters)
-    print resp
-
-    res, resp = api.TriggersGet()
-    print resp
+    print " "
+    print "#####################################"
+    print "Test TriggerPost:"
     
+    parameters = {'trigger':{'name':'the signal', 'inactivity':60}}
+    if api.TriggersPost(parameters):
+        print api.getResponse()
+        trigger_id = json.loads(api.getResponse())['trigger']['id']
+    
+    print "#####################################"
+    
+    print " "
+    print "#####################################"
+    print "Test SensorsTriggersPost:"
 
-if TEST_CREATENOTIFICATION:
-    # create a notification for new sensors
-    parameters = api.NotificationsPost_Parameters()
-    parameters['notification']['type'] = 'url'
-    parameters['notification']['text'] = 'herpaderping'
-    parameters['notification']['destination'] = 'http://climatemap.sense-os.nl'
-    status, response = api.NotificationsPost(parameters)
-    print response
-    notification_id = response['notification']['id']    
-    # setup the event
-    status, parameters = api.EventsNotificationsPost_Parameters()
-    parameters['event_notification']['name'] = 'new sensor event'
-    parameters['event_notification']['event'] = 'add_sensor'
-    parameters['event_notification']['notification_id'] = notification_id
-    status, response = api.EventsNotificationsPost(parameters)
-    print response
+    parameters = {'trigger':{'id':trigger_id}}
+    if api.SensorsTriggersPost(sensor_id, parameters):
+        print api.getResponse()
 
+    print "#####################################"
+
+    print " "
+    print "#####################################"
+    print "Test NotificationsPost:"
+
+    parameters = {'notification':{'type':'email', 'text':'inactivity!', 'destination':'jondar@blackmagic.com'}} 
+    if api.NotificationsPost(parameters):
+        print api.getResponse()
+        notification_id = json.loads(api.getResponse)['notification']['id']
+
+    print "#####################################"
+
+    print " "
+    print "#####################################"
+    print "Test SensorsTriggersNotificationsPost:"
+
+    parameters = {'notification': {'id':notification_id}}
+    if api.SensorsTriggersNotificationsPost(sensor_id, trigger_id, parameters):
+        print api.getResponse()
+
+    print "#####################################"
+
+    print " "
+    print "#####################################"
+    print "Test TriggersGet:"
+
+    if api.TriggersGet():
+        print api.getResponse()
+    
+    print "#####################################"
+
+if TEST_CREATEEVENT:
+    print " "
+    print "#####################################"
+    print "Test NotificationsPost:"
+    
+    parameters = {'notification':{'type':'url', 'text':'herpaderping', 'destination':'http://blackmagic.barsour.way'}}
+    if api.NotificationsPost(parameters):
+        print api.getResponse()
+        notification_id = json.loads(api.getResponse())['notification']['id']
+        
+    print "#####################################"    
+    
+    print " "
+    print "#####################################"
+    print "Test EventsNotificationsPost:"
+
+    parameters = {'event_notification': {'name':'new sensor event', 'event':'add_sensor'}}
+    if api.EventsNotificationsPost(parameters):
+        print api.getResponse()
+    
+    print "#####################################"
+    
 # test oauth authentication
 if TEST_OAUTHAUTHORIZATION:
+    print " "
+    print "#####################################"
+    print "Test AouthAuthorizeApplication:"
+   
     result  = ''
     token   = {}
     if api.server == 'live':
-        result, token = api.OauthAuthorizeApplication('ZDljODM4NTI4NTI4NzAzNDIzYjg', 'ZmI3NDJmNmM1ZjE3ZjZhMzgxMjI', 'for_ever')
+        result = api.OauthAuthorizeApplication('ZDljODM4NTI4NTI4NzAzNDIzYjg', 'ZmI3NDJmNmM1ZjE3ZjZhMzgxMjI', 'for_ever')
     elif api.server =='dev':
-        result, token = api.OauthAuthorizeApplication('NDQ1NTJjYTE0NjFkNmExYzI0Njc', 'OTA3NDg3ODRmNGZhYzU4MmNkMWM', 'for_ever')
-    print '-----------------------------'
-    print result
-    print token
-    print '-----------------------------'
+        result = api.OauthAuthorizeApplication('NDQ1NTJjYTE0NjFkNmExYzI0Njc', 'OTA3NDg3ODRmNGZhYzU4MmNkMWM', 'for_ever')
+    if result: 
+        print api.getResponse()
   
-# get current user
-if TEST_OAUTHAUTHENTICATION:
-    result, response = api.UsersGetCurrent()
-    print result, response
+    print "#####################################"
   
-#    consumer = api.OauthGetConsumer('ZDljODM4NTI4NTI4NzAzNDIzYjg', 'ZmI3NDJmNmM1ZjE3ZjZhMzgxMjI')
-#    response = api.OauthRequestToken(consumer)
-#    print response
-#    response = api.OauthAuthorize()
-#    response = api.OauthAccessToken(consumer)
-#    print response
 #logout
 if AUTHENTICATE_SESSIONID:
-    status, response = api.Logout()
-    print(response)
+    print " "
+    print "#####################################"
+    print "Test LogoutSessionId:"
+    
+    if api.LogoutSessionId():
+        print api.getResponse()
+        
+    print "#####################################"
