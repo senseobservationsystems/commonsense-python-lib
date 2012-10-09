@@ -16,71 +16,126 @@ limitations under the License.
 import md5, urllib, httplib, json, socket, oauth.oauth as oauth, urlparse
 
 class SenseAPI:
-	def __init__(self):
-		self.session_id = ""
-		self.status = 0
-		self.headers = []
-		self.response = ""
-		self.verbose = False
-		self.server  = 'live'
-		self.server_url ='api.sense-os.nl'
-		self.authentication = 'not_authenticated'
-		self.oauth_consumer = {}
-		self.oauth_token = {}
+	"""
+		Class for interacting with CommonSense Api. 
 		
+		Can be set to interact with either the live or test server.
+		Can authenticate using session_id and oauth.
+	"""
+	def __init__(self):
+		"""
+			Constructor function.
+		"""
+		self.__session_id__ = ""
+		self.__status__ = 0
+		self.__headers__ = {}
+		self.__response__ = ""
+		self.__error__ = ""
+		self.__verbose__ = False
+		self.__server__  = 'live'
+		self.__server_url__ ='api.sense-os.nl'
+		self.__authentication__ = 'not_authenticated'
+		self.__oauth_consumer__ = {}
+		self.__oauth_token__ = {}
+
+#===============================================
+# C O N F I G U R A T I O N  F U N C T I O N S =
+#===============================================
 	def setVerbosity(self, verbose):
+		"""
+			Set verbosity of the SenseApi object.
+			
+			@param verbose (boolean) - True of False
+			
+			@return (boolean) - Boolean indicating whether setVerbosity succeeded
+		"""
 		if not (verbose == True or verbose == False):
 			return False
 		else:
-			self.verbose = verbose
+			self.__verbose__ = verbose
 			return True
 
 	def setServer(self, server):
+		"""
+			Set server to interact with.
+			
+			@param server (string) - 'live' for live server, 'dev' for test server
+			
+			@return (boolean) - Boolean indicating whether setServer succeeded
+		"""  
 		if server == 'live':
-			self.server = server
-			self.server_url = 'api.sense-os.nl'
+			self.__server__ = server
+			self.__server_url__ = 'api.sense-os.nl'
 			return True
 		elif server == 'dev':
-			self.server = server
-			self.server_url = 'api.dev.sense-os.nl'
+			self.__server__ = server
+			self.__server_url__ = 'api.dev.sense-os.nl'
 			return True
 		else:
 			return False
 		
-	def setAuthenticationMethod(self, method):
+	def __setAuthenticationMethod__(self, method):
 		if not (method == 'session_id' or method == 'oauth' or method == 'authenticating_session_id' or method == 'authenticating_oauth' or method == 'not_authenticated'):
 			return False
 		else:
-			self.authentication = method
+			self.__authentication__ = method
 			return True
 		
-########################################
-# B A S E  A P I  C A L L  M E T H O D #
-########################################
-	def SenseApiCall(self, url, method, parameters=None, headers={}):
+
+#=======================================
+# R E T R I E V A L  F U N C T I O N S =	
+#=======================================
+	def getResponseStatus(self):
+		"""
+			Retrieve the response status code of the last api call
+			
+			@return (integer) - Http status code
+		"""
+		return self.__status__
+
+	def getResponseHeaders(self):
+		"""
+			Retrieve the response headers of the last api call
+			
+			@return (dictionary) - Dictonary containing headers
+		"""
+		return self.__headers__
+	
+	def getResponse(self):
+		"""
+			Retrieve the response of the last api call
+			
+			@return (string) - The literal response body, which is likely to be in json format
+		"""
+		return self.__response__
+
+#=======================================
+# B A S E  A P I  C A L L  M E T H O D =
+#=======================================
+	def __SenseApiCall__ (self, url, method, parameters=None, headers={}):
 		heads = headers
 		body = ''
 		http_url = url
 		
-		if self.authentication == 'not_authenticated':
-			self.status = 401
+		if self.__authentication__ == 'not_authenticated':
+			self.__status__ = 401
 			return False
 		
-		elif self.authentication == 'authenticating_oauth':
-			heads.update({'X-SESSION_ID':"{0}".format(self.session_id)})
+		elif self.__authentication__ == 'authenticating_oauth':
+			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
 			if not parameters is None:
 				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
 
-		elif self.authentication == 'authenticating_session_id':
+		elif self.__authentication__ == 'authenticating_session_id':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			if not parameters is None:
 				body = json.dumps(parameters) 
 
-		elif self.authentication == 'oauth':
-			oauth_url = 'http://{0}{1}'.format(self.server_url, url)
-			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, token=self.oauth_token, http_method=method, http_url=oauth_url)
-			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.oauth_consumer, self.oauth_token)
+		elif self.__authentication__ == 'oauth':
+			oauth_url = 'http://{0}{1}'.format(self.__server_url__, url)
+			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url)
+			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
 			heads.update(oauth_request.to_header())
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
@@ -90,8 +145,8 @@ class SenseAPI:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
 			
-		elif self.authentication == 'session_id':
-			heads.update({'X-SESSION_ID':"{0}".format(self.session_id)})
+		elif self.__authentication__ == 'session_id':
+			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
 					heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
@@ -100,161 +155,217 @@ class SenseAPI:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
 		else:
-			self.status = 418
+			self.__status__ = 418
 			return False
 
-		connection 	= httplib.HTTPSConnection(self.server_url, timeout=60)
+		connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
 			
 		try:
 			connection.request(method, http_url, body, heads);
 			result = connection.getresponse(); 
 		except: # TODO: check if this doesnt already generate a status
-			self.status = 408
+			self.__status__ = 408
 			return False
 
-		self.response 	= result.read()
-		self.status		= result.status
-		self.headers	= result.getheaders()
-
+		self.__headers__	= {}
+		
+		self.__response__ 	= result.read()
+		self.__status__	= result.status
+		resp_headers	= result.getheaders()
+		
 		connection.close()		
 		
-		if self.verbose:
+		for h in resp_headers:
+			self.__headers__.update({h[0]:h[1]})
+		
+		if self.__verbose__:
 			print "===================CALL==================="
 			print "Call: {0} {1}".format(method, http_url)
-			print "Server: {0}".format(self.server)
+			print "Server: {0}".format(self.__server__)
 			print "Headers: {0}".format(heads)
 			print "Body: {0}".format(body)
 			print "==================RESPONSE================"
-			print "Status: {0}".format(self.status)
-			print "Headers: {0}".format(self.headers)
-			print "Response: {0}".format(self.response)
+			print "Status: {0}".format(self.__status__)
+			print "Headers: {0}".format(self.__headers__)
+			print "Response: {0}".format(self.__response__)
 			print "==========================================\n"
 		
-		if self.status == 200 or self.status == 201 or self.status == 302:
+		if self.__status__ == 200 or self.__status__ == 201 or self.__status__ == 302:
 			return True
 		else:
 			return False
 		
-###################################################
-# S E S S I O N  I D  A U T H E N T I C A T I O N #
-###################################################
+#==================================================
+# S E S S I O N  I D  A U T H E N T I C A T I O N =
+#==================================================
 	def SetSessionId(self, session_id):
-		self.session_id = session_id
+		"""
+			Pass an existing session_id to SenseApi object. Use with care!
+			
+			@param session_id (string) - A valid session_id obtained by logging into CommonSense
+		"""
+		self.__setAuthenticationMethod__('session_id')
+		self.__session_id__ = session_id
 
 	def AuthenticateSessionId(self, username, password):
-		self.setAuthenticationMethod('authenticating_session_id')
+		"""
+			Authenticate using a username and password. 
+			The SenseApi object will store the obtained session_id internally until a call to LogoutSessionId is performed.
+			
+			@param username (string) - CommonSense username
+			@param password (string) - MD5Hash of CommonSense password
+			
+			@return (bool) - Boolean indicating whether AuthenticateSessionId was successful
+		""" 
+		self.__setAuthenticationMethod__('authenticating_session_id')
 			
 		parameters = {'username':username,'password':password}
 
-		if self.SenseApiCall("/login.json", "POST", parameters=parameters):
+		if self.__SenseApiCall__("/login.json", "POST", parameters=parameters):
 			try:
-				response = json.loads(self.response)
+				response = json.loads(self.__response__)
 			except: 
-				self.setAuthenticationMethod('not_authenticated')
-				return False, {'error':'notjson'}
+				self.__setAuthenticationMethod__('not_authenticated')
+				self.__error__ = "notjson"
+				return False
 			try: 
-				self.session_id = response['session_id']
-				self.authentication = 'session_id'		
-				return True, response
+				self.__session_id__ = response['session_id']
+				self.__setAuthenticationMethod__('session_id')		
+				return True
 			except: 
-				self.setAuthenticationMethod('not_authenticated')
-				return False, {'error':'no session id'}
+				self.__setAuthenticationMethod__('not_authenticated')
+				self.__error__ = "no session_id"
+				return False
 		else:
-			self.setAuthenticationMethod('not_authenticated')
-			return False, {'error':self.status}
+			self.__setAuthenticationMethod__('not_authenticated')
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 	def LogoutSessionId(self):
-		if self.SenseApiCall('/logout.json', 'POST'):
-			self.setAuthenticationMethod('not_authenticated')
-			return True, {}
+		"""
+			Logout the current session_id from CommonSense
+			
+			@return (bool) - Boolean indicating whether LogoutSessionId was successful
+		"""
+		if self.__SenseApiCall__('/logout.json', 'POST'):
+			self.__setAuthenticationMethod__('not_authenticated')
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 	# deprecated
 	def Login (self, username, password):
+		"""
+			Deprecated, use AuthenticateSessionId instead
+		"""
 		return self.AuthenticateSessionId(username, password)
 		
 	#deprecated
 	def Logout (self):
+		"""
+			Deprecated, use LogoutSessionId instead
+		"""
 		return self.LogoutSessionId()
 	
-##########################################		
-# O A U T H  A U T H E N T I C A T I O N #
-##########################################
+#=========================================
+# O A U T H  A U T H E N T I C A T I O N =
+#=========================================
 	def AuthenticateOauth (self, oauth_token_key, oauth_token_secret, oauth_consumer_key, oauth_consumer_secret):
-		self.oauth_consumer = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		self.oauth_token 	= oauth.OAuthToken(oauth_token_key, oauth_token_secret)
-		self.authentication = 'oauth'
-		if self.SenseApiCall('/users/current.json', 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Authenticate using Oauth
+			
+			@param oauth_token_key (string) - A valid oauth token key obtained from CommonSense
+			@param oauth_token_secret (string) - A valid oauth token secret obtained from CommonSense
+			@param oauth_consumer_key (string) - A valid oauth consumer key obtained from CommonSense
+			@param oauth_consumer_secret (string) - A valid oauth consumer secret obtained from CommonSense
+			
+			@return (boolean) - Boolean indicating whether the provided credentials were successfully authenticated
+		"""
+		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
+		self.__oauth_token__ 	= oauth.OAuthToken(oauth_token_key, oauth_token_secret)
+		self.__authentication__ = 'oauth'
+		if self.__SenseApiCall__('/users/current.json', 'GET'):
+			return True
 		else:
-			return False, {}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
-########################################
-# O A U T H  A U T H O R I Z A T I O N #
-########################################
+#=======================================
+# O A U T H  A U T H O R I Z A T I O N =
+#=======================================
 	def OauthAuthorizeApplication(self, oauth_consumer_key, oauth_consumer_secret, oauth_duration='hour', oauth_callback='http://www.sense-os.nl'):
-		if self.session_id == '':
-			return False, {'error':'not logged in'}
+		"""
+			Authorize an application using oauth. If this function returns True, the obtained oauth token can be retrieved using getResponse and will be in url-parameters format.
+			TODO: allow the option to ask the user himself for permission, instead of doing this automatically. Especially important for web applications.
+			
+			@param oauth_consumer_key (string) - A valid oauth consumer key obtained from CommonSense
+			@param oauth_consumer_secret (string) - A valid oauth consumer secret obtained from CommonSense
+			@param oauth_duration (string) (optional) -'hour', 'day', 'week', 'year', 'forever'
+			@param oauth_callback (string) (optional) - Oauth callback url
+			
+			@return (boolean) - Boolean indicating whether OauthAuthorizeApplication was successful
+		"""
+		if self.__session_id__ == '':
+			self.__error__ = "not logged in"
+			return False
 		
-		self.setAuthenticationMethod('authenticating_oauth')
+		self.__setAuthenticationMethod__('authenticating_oauth')
 		
 	# first obtain a request token
-		self.oauth_consumer = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, callback=oauth_callback, http_url='http://api.sense-os.nl/oauth/request_token')
-		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.oauth_consumer, None)
+		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback=oauth_callback, http_url='http://api.sense-os.nl/oauth/request_token')
+		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)
 		
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
 			parameters.append((key, oauth_request.parameters[key]))
 		parameters.sort()
 
-		if self.SenseApiCall('/oauth/request_token', 'GET', parameters=parameters):
-			response = urlparse.parse_qs(self.response)
-			self.oauth_token = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
+		if self.__SenseApiCall__('/oauth/request_token', 'GET', parameters=parameters):
+			response = urlparse.parse_qs(self.__response__)
+			self.__oauth_token__ = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
 		else:
-			self.setAuthenticationMethod('session_id')
-			return False, {'error':'error getting request token'}
+			self.__setAuthenticationMethod__('session_id')
+			self.__error__ = "error getting request token"
+			return False
 		
 	#second, automatically get authorization for the application
-		parameters 	= {'oauth_token':self.oauth_token.key, 'tok_expir':self.OauthGetTokExpir(oauth_duration), 'action':'ALLOW', 'session_id':self.session_id}
+		parameters 	= {'oauth_token':self.__oauth_token__.key, 'tok_expir':self.__OauthGetTokExpir__(oauth_duration), 'action':'ALLOW', 'session_id':self.__session_id__}
 		
-		if self.SenseApiCall('/oauth/provider_authorize', 'POST', parameters=parameters):
-			if self.status == 302:
-				for header in self.headers:
-					if header[0] == 'location':
-						response = urlparse.parse_qs(header[1])
-						self.oauth_token.verifier = response['oauth_verifier'][0]
+		if self.__SenseApiCall__('/oauth/provider_authorize', 'POST', parameters=parameters):
+			if self.__status__ == 302:
+				response = urlparse.parse_qs(self.__headers__['location'])
+				self.__oauth_token__.verifier = response['oauth_verifier'][0]
 			else:
-				self.setAuthenticationMethod('session_id')
-				return False, {'error':'error authorizing application'}
+				self.__setAuthenticationMethod__('session_id')
+				self.__error__ = "error authorizing application"
+				return False
 		else:
-			self.setAuthenticationMethod('session_id')
-			return False, {'error':'error authorizing application'}
+			self.__setAuthenticationMethod__('session_id')
+			self.__error__ = "error authorizing application"
+			return False
 		
 	#third, obtain access token
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.oauth_consumer, callback='', token=self.oauth_token, http_url='http://api.sense-os.nl/oauth/access_token')
-		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.oauth_consumer, self.oauth_token)
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback='', token=self.__oauth_token__, http_url='http://api.sense-os.nl/oauth/access_token')
+		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
 		
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
 			parameters.append((key, oauth_request.parameters[key]))
 		parameters.sort()
 		
-		if self.SenseApiCall('/oauth/access_token', 'GET', parameters=parameters):
-			response = urlparse.parse_qs(self.response)
-			self.oauth_token = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
-			self.setAuthenticationMethod('oauth')
-			return True, {'oauth_token':response['oauth_token'][0], 'oauth_token_secret':response['oauth_token_secret'][0]}
+		if self.__SenseApiCall__('/oauth/access_token', 'GET', parameters=parameters):
+			response = urlparse.parse_qs(self.__response__)
+			self.__oauth_token__ = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
+			self.__setAuthenticationMethod__('oauth')
+			return True
 		else:
-			self.setAuthenticationMethod('session_id')
-			return False, {'error':'error getting access token'}		
+			self.__setAuthenticationMethod__('session_id')
+			self.__error__ = "error getting access token"
+			return False		
 
-	def OauthGetTokExpir (self, duration):
+	def __OauthGetTokExpir__ (self, duration):
 		if duration == 'hour':
 			return 1
 		if duration == 'day':
@@ -266,15 +377,26 @@ class SenseAPI:
 		if duration == 'forever':
 			return 0		
 
-#################
-# S E N S O R S #
-#################
+#================
+# S E N S O R S =
+#================
 	def SensorsGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'shared':0, 'owned':0, 'physical':0, 'details':'full'}
 		
 	def SensorsGet(self, parameters=None, sensor_id=-1):
+		"""
+			Retrieve sensors from CommonSense, according to parameters, or by sensor id. 
+			If successful, result can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param parameters (dictionary) (optional) - Dictionary containing the parameters for the api-call.
+					@note - http://www.sense-os.nl/45?nodeId=45&selectedId=11887
+			@param sensor_id (int) (optional) - Sensor id of sensor to retrieve details from.
+			
+			@return (boolean) - Boolean indicating whether SensorsGet was successful.
+		"""
 		if parameters is None and sensor_id == -1:
-			return False, {'error':'no arguments'}
+			self.__error__ = "no arguments"
+			return False
 		
 		url = ''
 		if parameters is None:
@@ -282,372 +404,519 @@ class SenseAPI:
 		else:
 			url = '/sensors.json'
 			
-		if self.SenseApiCall(url, 'GET', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		if self.__SenseApiCall__(url, 'GET', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 				
 	def SensorsDelete(self, sensor_id):
-		if self.SenseApiCall('/sensors/{0}.json'.format(sensor_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Delete a sensor from CommonSense.
+			
+			@param sensor_id (int) - Sensor id of sensor to delete from CommonSense.
+			
+			@return (bool) - Boolean indicating whether SensorsDelete was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}.json'.format(sensor_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 				
 	def SensorsPost_Parameters(self):
 		return {'sensor': {'name':'', 'display_name':'', 'device_type':'', 'pager_type':'', 'data_type':'', 'data_structure':''}}
 		
 	def SensorsPost(self, parameters):
-		if self.SenseApiCall('/sensors.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Create a sensor in CommonSense.
+			If SensorsPost is successful, the sensor details, including its sensor_id, can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param parameters (dictonary) - Dictionary containing the details of the sensor to be created. 
+					@note - http://www.sense-os.nl/46?nodeId=46&selectedId=11887			
+									
+			@return (bool) - Boolean indicating whether SensorsPost was successful.
+		"""
+		if self.__SenseApiCall__('/sensors.json', 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
-########################
-# S E N S O R  D A T A #
-########################
+#=======================
+# S E N S O R  D A T A =
+#=======================
 	def SensorDataGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'start_date':0, 'end_date':4294967296, 'date':0, 'next':0, 'last':0, 'sort':'ASC', 'total':1}
 		
 	def SensorDataGet(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/data.json'.format(sensor_id), 'GET', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Retrieve sensor data for a specific sensor from CommonSense.
+			If SensorDataGet is successful, the result can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param sensor_id (int) - Sensor id of the sensor to retrieve data from.
+			@param parameters (dictionary) - Dictionary containing the parameters for the api call.
+					@note - http://www.sense-os.nl/52?nodeId=52&selectedId=11887
+					
+			@return (bool) - Boolean indicating whether SensorDataGet was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/data.json'.format(sensor_id), 'GET', parameters=parameters):
+			return True
 		else:	
-			return False, {'error':self.status} 
+			self.__error__ = "api call unsuccessful"
+			return False 
 	
 	def SensorDataPost(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/data.json'.format(sensor_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Post sensor data to a specific sensor in CommonSense.
+			
+			@param sensor_id (int) - Sensor id of the sensor to post data to.
+			@param parameters (dictionary) - Data to post to the sensor.
+					@note - http://www.sense-os.nl/53?nodeId=53&selectedId=11887
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/data.json'.format(sensor_id), 'POST', parameters=parameters):
+			return True, {}
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def SensorsDataPost(self, parameters):
-		if self.SenseApiCall('/sensors/data.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Post sensor data to multiple sensors in CommonSense simultaneously.
+			
+			@param parameters (dictionary) - Data to post to the sensors.
+					@note - http://www.sense-os.nl/59?nodeId=59&selectedId=11887
+					
+			@return (bool) - Boolean indicating whether SensorsDataPost was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/data.json', 'POST', parameters=parameters):
+			return True, {}
 		else:
-			return False, {'error':'{0}: {1}'.format(self.status, self.response)}
+			self.__error__ = "api call unsuccessful"
+			return False
 
-###################
-# S E R V I C E S #
-###################
+#==================
+# S E R V I C E S =
+#==================
 	def ServicesGet (self, sensor_id):
-		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Retrieve services connected to a sensor in CommonSense.
+			If ServicesGet is successful, the result can be obtained by a call to getResponse() and should be a json string.
+			
+			@sensor_id (int) - Sensor id of sensor to retrieve services from.
+			
+			@return (bool) - Boolean indicating whether ServicesGet was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services.json'.format(sensor_id), 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def ServicesPost_Parameters (self):
 		return {'service':{'name':'math_service', 'data_fields':['sensor']}, 'sensor':{'name':'', 'device_type':''}}
 
 	def ServicesPost (self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/services.json'.format(sensor_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				for header in self.headers:
-					if header[0] == 'location':
-						service_id = header[1].strip('abcdefghijklmnopqrstuvwxyz.:/-')
-						response.update({'service[id]':service_id})
-				return True, response
-			except:
-				return True, {}
+		"""
+			Create a new service in CommonSense, attached to a specific sensor. 
+			If ServicesPost was successful, the service details, including its service_id, can be obtained from getResponse(), and should be a json string.
+			
+			@param sensor_id (int) - The sensor id of the sensor to connect the service to.
+			@param parameters (dictionary) - The specifics of the service to create.
+					@note: http://www.sense-os.nl/81?nodeId=81&selectedId=11887
+			
+			@return (bool) - Boolean indicating whether ServicesPost was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services.json'.format(sensor_id), 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 	def ServicesDelete (self, sensor_id, service_id):
-		if self.SenseApiCall('/sensors/{0}/services/{1}.json'.format(sensor_id, service_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Delete a service from CommonSense.
+			
+			@param sensor_id (int) - Sensor id of the sensor the service is connected to.
+			@param service_id (int) - Sensor id of the service to delete.
+			
+			@return (bool) - Boolean indicating whether ServicesDelete was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}.json'.format(sensor_id, service_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
-		
+			self.__error__ = "api call unsuccessful"
+			return False
+				
 	def ServicesSet_Parameters (self):
 			return {'parameters':[]}
 		
 	def ServicesSetExpression (self, sensor_id, service_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/services/{1}/SetExpression.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Set expression for the math service.
+			
+			@param sensors_id (int) - Sensor id of the sensor the service is connected to.
+			@param service_id (int) - Service id of the service for which to set the expression.
+			@param parameters (dictonary) - Parameters to set the expression of the math service.
+					@note - http://www.sense-os.nl/85?nodeId=85&selectedId=11887
+					
+			@return (bool) - Boolean indicating whether ServicesSetExpression was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/SetExpression.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def ServicesSetUseDataTimestamp(self, sensor_id, service_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/services/{1}/SetUseDataTimestamp.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Indicate whether a math service should use the original timestamps of the incoming data, or let CommonSense timestamp the aggregated data.
+			
+			@param sensors_id (int) - Sensor id of the sensor the service is connected to.
+			@param service_id (int) - Service id of the service for which to set the expression.
+			@param parameters (dictonary) - Parameters to set the expression of the math service.
+					@note - http://www.sense-os.nl/85?nodeId=85&selectedId=11887
+					
+			@return (bool) - Boolean indicating whether ServicesSetuseDataTimestamp was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/SetUseDataTimestamp.json'.format(sensor_id, service_id), 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 			
 
-#############
-# U S E R S #
-#############
+#============
+# U S E R S =
+#============
 	def UsersGetCurrent (self):
-		if self.SenseApiCall('/users/current.json', 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Obtain details of current user. 
+			If successful, result can be obtained by a call to getResponse(), and should be a json string.
+			
+			@return (bool) - Boolean indicating whether UsersGetCurrent was successful.
+		"""
+		if self.__SenseApiCall__('/users/current.json', 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
-###############
-# E V E N T S #
-###############
+#==============
+# E V E N T S =
+#==============
 	def EventsNotificationsGet(self, event_notification_id = -1):
+		"""
+			Retrieve either all notifications or the notifications attached to a specific event.
+			If successful, result can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param event_notification_id (int) (optional) - Id of the event-notification to retrieve details from.
+			
+			@return (bool) - Boolean indicating whether EventsNotificationsGet was successful.
+		"""
 		if event_notification_id == -1:
 			url = '/events/notifications.json'
 		else:
 			url = '/events/notifications/{0}.json'.format(event_notification_id)
 			
-		if self.SenseApiCall(url, 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		if self.__SenseApiCall__(url, 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def EventsNotificationsDelete(self, event_notification_id):
-		if self.SenseApiCall('/events/notifications/{0}.json'.format(event_notification_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Delete an event-notification from CommonSense.
+			
+			@param event_notification_id (int) - Id of the event-notification to delete.
+			
+			@return (bool) - Boolean indicating whether EventsNotificationsDelete was successful.
+		"""
+		if self.__SenseApiCall__('/events/notifications/{0}.json'.format(event_notification_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def EventsNotificationsPost_Parameters(self):
 		return {'event_notification':{'name':'my_event', 'event':'add_sensor', 'notification_id':0, 'priority':0}}
 	
 	def EventsNotificationsPost(self, parameters):
-		if self.SenseApiCall('/events/notifications.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Create an event-notification in CommonSense.
+			If EvensNotificationsPost was successful the result, including the event_notification_id can be obtained from getResponse(), and should be a json string.
+			
+			@param parameters (dictionary) - Parameters according to which to create the event notification.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether EventsNotificationsPost was successful. 
+		""" 
+		if self.__SenseApiCall__('/events/notifications.json', 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
-###################
-# T R I G G E R S #
-###################
+#==================
+# T R I G G E R S =
+#==================
 	def TriggersGet(self, trigger_id=-1):
+		"""
+			Retrieve either all triggers or the details of a specific trigger.
+			If successful, result can be obtained by a call to getResponse(), and should be a json string.
+
+			@param trigger_id (int) (optional) - Trigger id of the trigger to retrieve details from.
+			
+			@param (bool) - Boolean indicating whether TriggersGet was successful.
+		"""
 		if trigger_id == -1:
 			url = '/triggers.json'
 		else:
 			url = '/triggers/{0}.json'.format(trigger_id)
-		if self.SenseApiCall(url, 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		if self.__SenseApiCall__(url, 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def TriggersDelete(self, trigger_id):
-		if self.SenseApiCall('/triggers/{0}'.format(trigger_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Delete a trigger from CommonSense.
+			
+			@param trigger_id (int) - Trigger id of the trigger to delete.
+			
+			@return (bool) - Boolean indicating whether TriggersDelete was successful.
+		""" 
+		if self.__SenseApiCall__('/triggers/{0}'.format(trigger_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def TriggersPost_Parameters(self):
 		return {'trigger':{'name':'', 'expression':'', 'inactivity':0}}
 
 	def TriggersPost(self, parameters):
-		if self.SenseApiCall('/triggers.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Create a trigger on CommonSense.
+			If TriggersPost was successful the result, including the trigger_id, can be obtained from getResponse().
+			
+			@param parameters (dictionary) - Parameters of the trigger to create.
+					@note 
+					
+			@return (bool) - Boolean indicating whether TriggersPost was successful.
+		"""
+		if self.__SenseApiCall__('/triggers.json', 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
-##################################
-# S E N S O R S  T R I G G E R S #
-##################################
+#=================================
+# S E N S O R S  T R I G G E R S =
+#=================================
 	def SensorsTriggersGet(self, sensor_id, trigger_id=-1):
+		"""
+			Obtain either all triggers connected to a sensor, or the details of a specific trigger connected to a sensor.
+			If successful, result can be obtained from getResponse(), and should be a json string.
+			
+			@param sensor_id (int) - Sensor id of the sensor to retrieve triggers from.
+			@param trigger_id (int) (optional) - Trigger id of the trigger to retrieve details from.
+			
+			@return (bool) - Boolean indicating whether SensorsTriggersGet was successful.
+		"""
 		if trigger_id == -1:
 			url = '/sensors/{0}/triggers.json'.format(sensor_id)
 		else:
 			url = '/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id)
 			
-		if self.SenseApiCall(url, 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		if self.__SenseApiCall__(url, 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 	
 	def SensorsTriggersDelete(self, sensor_id, trigger_id):
-		if self.SenseApiCall('/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Disconnect a trigger from a sensor in CommonSense
+			
+			@param sensor_id (int) - Sensor id of the sensor to disconnect a trigger from.
+			@param trigger_id (int) - Trigger id of the trigger to disconnect.
+			
+			@return (bool) - Boolean indicating whether SensorsTriggersDelete was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 	def SensorsTriggersPost_Parameters(self):
 		return {'trigger':{'id':0}}
 		
 	def SensorsTriggersPost(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/triggers'.format(sensor_id), 'POST', parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Connect a trigger to a sensor in CommonSense.
+			
+			@param sensor_id (int) - Sensor id of the sensor to connect a trigger to.
+			@param parameters (dictionary) - Dictionary containing the details of the trigger.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether SensorsTriggersPost was successeful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers'.format(sensor_id), 'POST', parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 #TODO: SensorsTriggerPut
 
-#############################################################
-# S E N S O R S  T R I G G E R S  N O T I F I C A T I O N S #
-#############################################################
+#============================================================
+# S E N S O R S  T R I G G E R S  N O T I F I C A T I O N S =
+#============================================================
 	def SensorsTriggersNotificationsGet(self, sensor_id, trigger_id):
-		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Obtain all notifications connected to a sensor-trigger combination.
+			If successful, the result can be obtained from getResponse(), and should be a json string.
+			
+			@param sensor_id (int) - Sensor id if the sensor-trigger combination.
+			@param trigger_id (int) - Trigger id of the sensor-trigger combination.
+			
+			@return (bool) - Boolean indicating whether SensorstriggersNoticiationsGet was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def SensorsTriggersNotificationsDelete(self, sensor_id, trigger_id, notification_id):
-		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications/{2}.json'.format(sensor_id, trigger_id, notification_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Disconnect a notification from a sensor-trigger combination.
+			
+			@param sensor_id (int) - Sensor id if the sensor-trigger combination.
+			@param trigger_id (int) - Trigger id of the sensor-trigger combination.
+			@param notification_id (int) - Notification id of the notification to disconnect.
+			
+			@param (bool) - Boolean indicating whether SensorstriggersNotificationsDelete was successful.			
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}/notifications/{2}.json'.format(sensor_id, trigger_id, notification_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 	
 	def SensorsTriggersNotificationsPost_Parameters(self):
 		return {'notification':{'id':0}}
 		
 	def SensorsTriggersNotificationsPost(self, sensor_id, trigger_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Connect a notification to a sensor-trigger combination.
+			
+			@param sensor_id (int) - Sensor id if the sensor-trigger combination.
+			@param trigger_id (int) - Trigger id of the sensor-trigger combination.
+			@param parameters (dictionary) - Dictionary containing the notification to connect.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether SensorsTriggersNotificationsPost was successful.			
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}/notifications.json'.format(sensor_id, trigger_id), 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 		
-#############################
-# N O T I F I C A T I O N S #
-#############################
+#============================
+# N O T I F I C A T I O N S =
+#============================
 	def NotificationsGet(self, notification_id=-1):
+		"""
+			Obtain either all notifications from CommonSense, or the details of a specific notification.
+			If successful, the result can be obtained from getResponse(), and should be a json string.
+			
+			@param notification_id (int) (optional) - Notification id of the notification to obtain details from.
+			
+			@return (bool) - Boolean indicating whether NotificationsGet was successful.
+		"""
 		if notification_id == -1:
 			url = '/notifications.json'
 		else:
 			url = '/notifications/{0}.json'.format(notification_id)
 			
-		if self.SenseApiCall(url, 'GET'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		if self.__SenseApiCall__(url, 'GET'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def NotificationsDelete(self, notification_id):
-		if self.SenseApiCall('/notifications/{0}.json'.format(notification_id), 'DELETE'):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Delete a notification from CommonSense.
+			
+			@param notification_id (int) - Notification id of the notification to delete.
+			
+			@return (bool) - Boolean indicating whether NotificationsDelete was successful.
+		"""
+		if self.__SenseApiCall__('/notifications/{0}.json'.format(notification_id), 'DELETE'):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
 	def NotificationsPost_Parameters(self):
 		return {'notification':{'type':'url, email', 'text':'herpaderp', 'destination':'http://api.sense-os.nl/scripts'}}
 	
 	def NotificationsPost(self, parameters):
-		if self.SenseApiCall('/notifications.json', 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Create a notification on CommonSense.
+			If successful the result, including the notification_id, can be obtained from getResponse(), and should be a json string.
+			
+			@param parameters (dictionary) - Dictionary containing the notification to create.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether NotificationsPost was successful.
+		"""
+		if self.__SenseApiCall__('/notifications.json', 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status}
+			self.__error__ = "api call unsuccessful"
+			return False
 
-#################
-# D E V I C E S #
-#################
+#================
+# D E V I C E S =
+#================
 	def SensorAddToDevice_Parameters(self):
 		return {'device':{'id':0, 'type':'', 'uuid':0}}
 
 	def SensorAddToDevice(self, sensor_id, parameters):
-		if self.SenseApiCall('/sensors/{0}/device.json'.format(sensor_id), 'POST', parameters=parameters):
-			try:
-				response = json.loads(self.response)
-				return True, response
-			except:
-				return True, {}
+		"""
+			Add a sensor to a device in CommonSense. 
+			If successful, the result, including the device_id, can be obtained from getResponse(), and should be a json string.
+			
+			@param sensor_id (int) - Sensor id of the sensor to add to a device.
+			@param parameters (dictionary) - Dictionary containing the device to attach the sensor to.
+			
+			@return (bool) - Boolean indicating whether SensorAddToDevice was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/device.json'.format(sensor_id), 'POST', parameters=parameters):
+			return True
 		else:
-			return False, {'error':self.status} 
+			self.__error__ = "api call unsuccessful"
+			return False
 		
-###################################
-# N O N  C L A S S  M E T H O D S #
-###################################
+#==================================
+# N O N  C L A S S  M E T H O D S =
+#==================================
 def MD5Hash(password):
+	"""
+		Returns md5 hash of a string.
+		
+		@param password (string) - String to be hashed.
+		
+		@return (string) - Md5 hash of password.
+	"""
 	md5_password = md5.new(password)
 	password_md5 = md5_password.hexdigest()
 	return password_md5
