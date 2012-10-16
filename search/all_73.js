@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['senseapi',['SenseAPI',['../classsenseapi_1_1SenseAPI.html',1,'senseapi']]],
+  ['senseapi',['senseapi',['../namespacesenseapi.html',1,'']]],
+  ['senseapitest',['SenseAPITest',['../namespaceSenseAPITest.html',1,'']]],
+  ['sensoraddtodevice',['SensorAddToDevice',['../classsenseapi_1_1SenseAPI.html#a15b3b9b9f7ff9db13ee0d2f63a037010',1,'senseapi::SenseAPI']]],
+  ['sensordataget',['SensorDataGet',['../classsenseapi_1_1SenseAPI.html#aacfbd02f97614ab3bf7cf7ea9f79a062',1,'senseapi::SenseAPI']]],
+  ['sensordatapost',['SensorDataPost',['../classsenseapi_1_1SenseAPI.html#a58ffc486eeec9306f665110f519b1f96',1,'senseapi::SenseAPI']]],
+  ['sensorsdatapost',['SensorsDataPost',['../classsenseapi_1_1SenseAPI.html#a1d292e77fd61a4def01e5959d50c2bb8',1,'senseapi::SenseAPI']]],
+  ['sensorsdelete',['SensorsDelete',['../classsenseapi_1_1SenseAPI.html#ae09eb8e66e2e925a8ff361c89eaab5fd',1,'senseapi::SenseAPI']]],
+  ['sensorsget',['SensorsGet',['../classsenseapi_1_1SenseAPI.html#ad3b6e537b3c65078116344982f3c2cdb',1,'senseapi::SenseAPI']]],
+  ['sensorspost',['SensorsPost',['../classsenseapi_1_1SenseAPI.html#ae11bcc38b1a2e612cf60ad54a752c7a9',1,'senseapi::SenseAPI']]],
+  ['sensorstriggersdelete',['SensorsTriggersDelete',['../classsenseapi_1_1SenseAPI.html#a07a023a7a61a8ad5dcdc71cf9345f620',1,'senseapi::SenseAPI']]],
+  ['sensorstriggersget',['SensorsTriggersGet',['../classsenseapi_1_1SenseAPI.html#a3345a919febbe467b2312449b4f324da',1,'senseapi::SenseAPI']]],
+  ['sensorstriggersnotificationsdelete',['SensorsTriggersNotificationsDelete',['../classsenseapi_1_1SenseAPI.html#a60fd0899164edd008bc12e59867fea5c',1,'senseapi::SenseAPI']]],
+  ['sensorstriggersnotificationsget',['SensorsTriggersNotificationsGet',['../classsenseapi_1_1SenseAPI.html#a63b706d10f20ffa691a840c75c6e1238',1,'senseapi::SenseAPI']]],
+  ['sensorstriggersnotificationspost',['SensorsTriggersNotificationsPost',['../classsenseapi_1_1SenseAPI.html#a87a0a97d022db0aa6e1381f9526ae69d',1,'senseapi::SenseAPI']]],
+  ['sensorstriggerspost',['SensorsTriggersPost',['../classsenseapi_1_1SenseAPI.html#aa758f4ca5b47652d5d8a946f7078f3f9',1,'senseapi::SenseAPI']]],
+  ['servicesdelete',['ServicesDelete',['../classsenseapi_1_1SenseAPI.html#a0fe4c02e32c918e6b91d3b675e668673',1,'senseapi::SenseAPI']]],
+  ['servicesget',['ServicesGet',['../classsenseapi_1_1SenseAPI.html#a4218335499034c393f6cb07f5954a0c3',1,'senseapi::SenseAPI']]],
+  ['servicespost',['ServicesPost',['../classsenseapi_1_1SenseAPI.html#ada6e368995f8f703abe6d67588df5468',1,'senseapi::SenseAPI']]],
+  ['servicessetexpression',['ServicesSetExpression',['../classsenseapi_1_1SenseAPI.html#a097c6438ae24a788625c08ea5404db71',1,'senseapi::SenseAPI']]],
+  ['servicessetusedatatimestamp',['ServicesSetUseDataTimestamp',['../classsenseapi_1_1SenseAPI.html#a44a1946bf7c10d286a3587bd00af44af',1,'senseapi::SenseAPI']]],
+  ['setserver',['setServer',['../classsenseapi_1_1SenseAPI.html#ae64160f8d435c086e1bc78e79def3459',1,'senseapi::SenseAPI']]],
+  ['setsessionid',['SetSessionId',['../classsenseapi_1_1SenseAPI.html#ae074777af8f7f488f20bda7cbb35e010',1,'senseapi::SenseAPI']]],
+  ['setverbosity',['setVerbosity',['../classsenseapi_1_1SenseAPI.html#a74903864524ba69c79b20baeb4988e39',1,'senseapi::SenseAPI']]]
+];
