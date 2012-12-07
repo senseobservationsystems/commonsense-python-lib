@@ -63,6 +63,7 @@ TEST_CREATESERVICE          = False
 TEST_CREATEEVENT            = False
 TEST_CREATETRIGGER          = False
 TEST_OAUTHAUTHORIZATION     = False 
+TEST_GROUPS                 = True
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
@@ -255,7 +256,71 @@ if TEST_OAUTHAUTHORIZATION:
         print api.getResponse()
   
     print "#####################################"
-  
+
+#Test groups
+if TEST_GROUPS:
+    def testGroups():
+        print " "
+        print "#####################################"
+        group={}
+        group['name']='SomeTestGroup_l3vs9rrv'
+        group['description']='Group for testing'
+        group['public']=True
+        group['hidden']=True
+        par={'group':group}
+        
+        groupId = None
+        print "Test GroupsPost:"
+        if api.GroupsPost(par):
+            print api.getResponse()
+            response = json.loads(api.getResponse())
+            groupId = response['group']['id']
+        if groupId is None:
+                print "Couldn't create group, aborting the next tests with groups."
+                return
+        print "Test GroupsPut:"
+        if api.GroupsPut(par, groupId):
+            print api.getResponse()
+        print "#####################################"
+        print "Test GroupsGet:"
+        par = api.GroupsGet_Parameters()
+        if api.GroupsGet(par):
+            print api.getResponse()
+        print "#####################################"
+        print "Test GroupsGet({}):".format(groupId)
+        par = api.GroupsGet_Parameters()
+        if api.GroupsGet(par, groupId):
+            print api.getResponse()
+        print "#####################################"
+        print "Test GroupsUsersPost({}):".format(groupId)
+        # need current user id for this
+        api.UsersGetCurrent()
+        response = json.loads(api.getResponse())
+        myUserId = response['user']['id']
+        
+        par = api.GroupsUsersPost_Parameters()
+        par['users'][0]['user'] = {'id':myUserId}
+        if api.GroupsUsersPost(par, groupId):
+            print api.getResponse()
+        print "#####################################"
+        print "Test GroupsUsersGet():"
+        par = api.GroupsUsersGet_Parameters()
+        if api.GroupsUsersGet(par, groupId):
+            print api.getResponse()
+        print "#####################################"
+        print "Test GroupsUsersDelete():"
+        if api.GroupsUsersDelete(groupId, myUserId):
+            print api.getResponse()
+
+	#After leaving the group we cannot delete the group...
+        #print "#####################################"
+	#print "Test GroupsDelete:"
+        #if api.GroupsDelete(groupId):
+        #    print api.getResponse()
+        
+        print "#####################################"
+	testGroups()
+
 #logout
 if AUTHENTICATE_SESSIONID:
     print " "
@@ -266,3 +331,4 @@ if AUTHENTICATE_SESSIONID:
         print api.getResponse()
         
     print "#####################################"
+
