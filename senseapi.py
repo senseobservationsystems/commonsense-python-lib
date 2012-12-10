@@ -607,7 +607,7 @@ class SenseAPI:
 			
 			@return (bool) - Boolean indicating whether UsersDelete was successful.
 		"""
-		if self.__SenseApiCall__('/users/{}.json'.format(user_id), 'DELETE'):
+		if self.__SenseApiCall__('/users/{user_id}.json'.format(user_id=user_id), 'DELETE'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -990,7 +990,7 @@ class SenseAPI:
 									
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
-		if self.__SenseApiCall__('/groups/{}'.format(group_id), 'PUT', parameters=parameters):
+		if self.__SenseApiCall__('/groups/{group_id}'.format(group_id=group_id), 'PUT', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -1007,7 +1007,7 @@ class SenseAPI:
 									
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
-		if self.__SenseApiCall__('/groups/{}/users.json'.format(group_id), 'GET', parameters=parameters):
+		if self.__SenseApiCall__('/groups/{group_id}/users.json'.format(group_id=group_id), 'GET', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -1027,7 +1027,7 @@ class SenseAPI:
 									
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
-		if self.__SenseApiCall__('/groups/{}/users.json'.format(group_id), 'POST', parameters=parameters):
+		if self.__SenseApiCall__('/groups/{group_id}/users.json'.format(group_id=group_id), 'POST', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -1039,7 +1039,7 @@ class SenseAPI:
 			
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
-		if self.__SenseApiCall__('/groups/{}/users/{}.json'.format(group_id,user_id), 'DELETE'):
+		if self.__SenseApiCall__('/groups/{group_id}/users/{user_id}.json'.format(group_id=group_id,user_id=user_id), 'DELETE'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"

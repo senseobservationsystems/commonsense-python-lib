@@ -287,12 +287,12 @@ if TEST_GROUPS:
         if api.GroupsGet(par):
             print api.getResponse()
         print "#####################################"
-        print "Test GroupsGet({}):".format(groupId)
+        print "Test GroupsGet({0}):".format(groupId)
         par = api.GroupsGet_Parameters()
         if api.GroupsGet(par, groupId):
             print api.getResponse()
         print "#####################################"
-        print "Test GroupsUsersPost({}):".format(groupId)
+        print "Test GroupsUsersPost():"
         # need current user id for this
         api.UsersGetCurrent()
         response = json.loads(api.getResponse())
@@ -319,7 +319,7 @@ if TEST_GROUPS:
         #    print api.getResponse()
         
         print "#####################################"
-	testGroups()
+    testGroups()
 
 #logout
 if AUTHENTICATE_SESSIONID:
