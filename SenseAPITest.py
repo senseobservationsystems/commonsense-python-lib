@@ -15,6 +15,7 @@ limitations under the License.
 
 import senseapi
 import json
+import string
 
 #####################
 # I M P O R T A N T #
@@ -272,9 +273,11 @@ if TEST_GROUPS:
         groupId = None
         print "Test GroupsPost:"
         if api.GroupsPost(par):
-            print api.getResponse()
-            response = json.loads(api.getResponse())
-            groupId = response['group']['id']
+            headers = api.getResponseHeaders()
+            #headers are case insensitive, map to lower case for easy lookup
+            headers = dict(zip(map(string.lower, headers.keys()), headers.values()))
+            location = headers.get('location')
+            groupId = location.split('/')[-1]
         if groupId is None:
                 print "Couldn't create group, aborting the next tests with groups."
                 return
