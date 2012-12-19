@@ -268,6 +268,7 @@ class SenseAPI:
 		"""
 		return self.LogoutSessionId()
 	
+	
 #=========================================
 # O A U T H  A U T H E N T I C A T I O N =
 #=========================================
@@ -441,6 +442,20 @@ class SenseAPI:
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorsPut(self, sensor_id, parameters):
+		"""
+			Update a sensor in CommonSense.
+			
+			@param parameters (dictionary) - Dictionary containing the sensor parameters to be updated.
+					
+			@return (bool) - Boolean indicating whether SensorsPut was succsesful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}.json'.format(sensor_id), 'PUT', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unscuccessful"
 			return False
 		
 #=======================
