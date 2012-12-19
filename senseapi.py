@@ -601,6 +601,17 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+	def UsersDelete (self, user_id):
+		"""
+			Delete user. 
+			
+			@return (bool) - Boolean indicating whether UsersDelete was successful.
+		"""
+		if self.__SenseApiCall__('/users/{user_id}.json'.format(user_id=user_id), 'DELETE'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 #==============
 # E V E N T S =
@@ -901,6 +912,134 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether SensorAddToDevice was successful.
 		"""
 		if self.__SenseApiCall__('/sensors/{0}/device.json'.format(sensor_id), 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+#==============
+# G R O U P S =
+#==============
+	def GroupsGet_Parameters(self):
+		return {'page':0, 'per_page':100, 'total':0, 'public':0 }
+		
+	def GroupsGet(self, parameters=None, group_id=-1):
+		"""
+			Retrieve groups from CommonSense, according to parameters, or by group id. 
+			If successful, result can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param parameters (dictionary) (optional) - Dictionary containing the parameters for the api-call.
+			@param group_id (int) (optional) - Id of the group to retrieve details from.
+			
+			@return (boolean) - Boolean indicating whether GroupsGet was successful.
+		"""
+		if parameters is None and group_id == -1:
+			self.__error__ = "no arguments"
+			return False
+		
+		url = ''
+		if group_id is -1:
+			url = '/groups.json'
+		else:
+			url = '/groups/{0}.json'.format(group_id)
+			
+		if self.__SenseApiCall__(url, 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+				
+	def GroupsDelete(self, group_id):
+		"""
+			Delete a group from CommonSense.
+			
+			@param group_id (int) - group id of group to delete from CommonSense.
+			
+			@return (bool) - Boolean indicating whether GroupsDelete was successful.
+		"""
+		if self.__SenseApiCall__('/groups/{0}.json'.format(group_id), 'DELETE'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+				
+	def GroupsPost_Parameters(self):
+		return {'group': {'name':''}}
+		
+	def GroupsPost(self, parameters):
+		"""
+			Create a group in CommonSense.
+			If GroupsPost is successful, the group details, including its group_id, can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param parameters (dictonary) - Dictionary containing the details of the group to be created. 
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/groups.json', 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def GroupsPut_Parameters(self):
+		return self.GroupsPost_Parameters()
+	
+	def GroupsPut(self, parameters, group_id):
+		"""
+			Update a group in CommonSense.
+			If GroupsPut is successful, the group details, including its group_id, can be obtained by a call to getResponse(), and should be a json string.
+			
+			@param parameters (dictonary) - Dictionary containing the details of the group to be created. 
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/groups/{group_id}'.format(group_id=group_id), 'PUT', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def GroupsUsersGet_Parameters(self):
+		return {'details': 'full'}
+
+	def GroupsUsersGet(self, parameters, group_id):
+		"""
+			List users to a group in CommonSense.
+			
+			@param parameters (dictonary) - Dictionary containing the parameters of the request.
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/groups/{group_id}/users.json'.format(group_id=group_id), 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def GroupsUsersPost_Parameters(self):
+		return {"users":[{"user":{"id":"","username":""}}]}
+
+	def GroupsUsersPost(self, parameters, group_id):
+		"""
+			Add users to a group in CommonSense.
+			
+			@param parameters (dictonary) - Dictionary containing the users to add.
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/groups/{group_id}/users.json'.format(group_id=group_id), 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def GroupsUsersDelete(self, group_id, user_id):
+		"""
+			Delete a user from a group in CommonSense.
+			
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/groups/{group_id}/users/{user_id}.json'.format(group_id=group_id,user_id=user_id), 'DELETE'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
