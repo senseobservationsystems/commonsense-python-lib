@@ -916,6 +916,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
 #==============
 # G R O U P S =
 #==============
@@ -979,8 +980,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
 	def GroupsPut_Parameters(self):
-		return GroupsPost_Parameters()
+		return self.GroupsPost_Parameters()
+	
 	def GroupsPut(self, parameters, group_id):
 		"""
 			Update a group in CommonSense.
@@ -1014,10 +1017,7 @@ class SenseAPI:
 			return False
 
 	def GroupsUsersPost_Parameters(self):
-		return {"users":[{"user":{
-			    "id":"",
-                            "username":""
-                           }}]}
+		return {"users":[{"user":{"id":"","username":""}}]}
 
 	def GroupsUsersPost(self, parameters, group_id):
 		"""

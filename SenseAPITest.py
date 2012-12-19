@@ -56,10 +56,10 @@ except:
 AUTHENTICATE_SESSIONID      = True
 AUTHENTICATE_OAUTH          = False
 
-TEST_GETSENSORS             = True
-TEST_GETSENSORDATA          = True
-TEST_POSTSENSORS            = True
-TEST_POSTSENSORDATA         = True
+TEST_GETSENSORS             = False
+TEST_GETSENSORDATA          = False
+TEST_POSTSENSORS            = False
+TEST_POSTSENSORDATA         = False
 TEST_CREATESERVICE          = False
 TEST_CREATEEVENT            = False
 TEST_CREATETRIGGER          = False
