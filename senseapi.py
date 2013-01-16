@@ -26,6 +26,7 @@ class SenseAPI:
 		"""
 			Constructor function.
 		"""
+		self.__api_key__ = ""
 		self.__session_id__ = ""
 		self.__status__ = 0
 		self.__headers__ = {}
@@ -37,6 +38,7 @@ class SenseAPI:
 		self.__authentication__ = 'not_authenticated'
 		self.__oauth_consumer__ = {}
 		self.__oauth_token__ = {}
+		self.__use_https__ = True
 
 #===============================================
 # C O N F I G U R A T I O N  F U N C T I O N S =
@@ -66,16 +68,25 @@ class SenseAPI:
 		if server == 'live':
 			self.__server__ = server
 			self.__server_url__ = 'api.sense-os.nl'
+			self.setUseHTTPS()
 			return True
 		elif server == 'dev':
 			self.__server__ = server
 			self.__server_url__ = 'api.dev.sense-os.nl'
+			#the dev server doesn't support https
+			self.setUseHTTPS(False)
 			return True
 		else:
 			return False
+	def setUseHTTPS(self, enable=True):
+		"""
+			Set whether to use https or http.
+			@param enable (boolean) - True to enable https (default), False to use http
+		"""
+		self.__use_https__ = enable
 		
 	def __setAuthenticationMethod__(self, method):
-		if not (method == 'session_id' or method == 'oauth' or method == 'authenticating_session_id' or method == 'authenticating_oauth' or method == 'not_authenticated'):
+		if not (method in ['session_id','oauth','authenticating_session_id','authenticating_oauth','not_authenticated','api_key']):
 			return False
 		else:
 			self.__authentication__ = method
@@ -154,11 +165,24 @@ class SenseAPI:
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
+		elif self.__authentication__ == 'api_key':
+			if parameters is None:
+				parameters = {}
+			parameters['API_KEY'] = self.__api_key__
+			if method == 'GET' or method == 'DELETE':
+				heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
+				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+			else:
+				heads.update({"Content-type": "application/json", "Accept":"*"})
+				body = json.dumps(parameters)
 		else:
 			self.__status__ = 418
 			return False
 
-		connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		if self.__use_https__:
+			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		else:
+			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
 			
 		try:
 			connection.request(method, http_url, body, heads);
@@ -195,6 +219,17 @@ class SenseAPI:
 		else:
 			return False
 		
+#=============================================
+# A P I _ K E Y  A U T H E N T I C A T I O N =
+#=============================================
+	def SetApiKey(self, api_key):
+		"""
+			Set the api key.
+			
+			@param api_key (string) - A valid api key to authenticate with CommonSense
+		"""
+		self.__setAuthenticationMethod__('api_key')
+		self.__api_key__ = api_key
 #==================================================
 # S E S S I O N  I D  A U T H E N T I C A T I O N =
 #==================================================
@@ -1044,6 +1079,21 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+
+#==============
+# S T A T E S =
+#==============
+	def StatesDefaultCheck(self):
+		"""
+			Create default states.
+			@return (bool) - Boolean indicating wether this request was successful.
+		"""
+		if self.__SenseApiCall__('/states/default/check.json', 'GET'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
 		
 #==================================
 # N O N  C L A S S  M E T H O D S =
