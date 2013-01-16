@@ -87,7 +87,6 @@ class SenseAPI:
 		
 	def __setAuthenticationMethod__(self, method):
 		if not (method in ['session_id','oauth','authenticating_session_id','authenticating_oauth','not_authenticated','api_key']):
-			raise Exception('Sanity check failed. Unknown authentication method')
 			return False
 		else:
 			self.__authentication__ = method
