@@ -108,9 +108,17 @@ class SenseAPI:
 			@return (string) - The literal response body, which is likely to be in json format
 		"""
 		return self.__response__
+	
+	def getError(self):
+		"""
+			Retrieve the error value
+			
+			@return (string) - The most recent error message
+		"""
+		return self.__error__
 
 #=======================================
-# B A S E  A P I  C A L L  M E T H O D =
+	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
 	def __SenseApiCall__ (self, url, method, parameters=None, headers={}):
 		heads = headers
@@ -158,7 +166,10 @@ class SenseAPI:
 			self.__status__ = 418
 			return False
 
-		connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		if self.__server__ == 'live':
+			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		else:
+			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60) 
 			
 		try:
 			connection.request(method, http_url, body, heads);
@@ -450,12 +461,169 @@ class SenseAPI:
 			
 			@param parameters (dictionary) - Dictionary containing the sensor parameters to be updated.
 					
-			@return (bool) - Boolean indicating whether SensorsPut was succsesful.
+			@return (bool) - Boolean indicating whether SensorsPut was successful.
 		"""
 		if self.__SenseApiCall__('/sensors/{0}.json'.format(sensor_id), 'PUT', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unscuccessful"
+			return False
+		
+#==================
+# M E T A T A G S =
+#==================
+	def SensorsMetatagsGet(self, parameters, namespace=None):
+		"""
+			Retrieve sensors with their metatags.
+			
+			@param namespace (string) - Namespace for which to retrieve the metatags.
+			@param parameters (dictionary - Dictionary containing further parameters.
+			
+			@return (bool) - Boolean indicating whether SensorsMetatagsget was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__('/sensors/metatags.json','GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def GroupSensorsMetatagsGet(self, group_id, parameters, namespace=None):
+		"""
+			Retrieve sensors in a group with their metatags.
+			
+			@param group_id (int) - Group id for which to retrieve metatags.
+			@param namespace (string) - Namespace for which to retrieve the metatags.
+			@param parameters (dictionary) - Dictionary containing further parameters.
+			
+			@return (bool) - Boolean indicating whether GroupSensorsMetatagsGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__('/groups/{0}/sensors/metatags.json'.format(group_id), 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorMetatagsGet(self, sensor_id, namespace=None):
+		"""
+			Retrieve the metatags of a sensor.
+			
+			@param sensor_id (int) - Id of the sensor to retrieve metatags from
+			@param namespace (stirng) - Namespace for which to retrieve metatags.
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__('/sensors/{0}/metatags.json'.format(sensor_id), 'GET', parameters={'namespace': ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def SensorMetatagsPost(self, sensor_id, metatags, namespace=None):
+		"""
+			Attach metatags to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to attach metatags to
+			@param namespace (string) - Namespace for which to attach metatags
+			@param metatags (dictionary) - Metatags to attach to the sensor
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsPost was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namepsace={1}".format(sensor_id, ns), "POST", parameters=metatags):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorMetatagsPut(self, sensor_id, metatags, namespace=None):
+		"""
+			Overwrite the metatags attached to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to overwrite metatags for
+			@param namespace (string) - Namespace for which to overwrite metatags
+			@param metatags (dictionary) - Metatags to overwrite the existing metatags with
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsPut was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namespace={1}".format(sensor_id, ns), "POST", parameters=metatags):
+			return True
+		else:
+			self.__error__ ="api call unsuccessful"
+			return False
+		
+	def SensorMetatagsDelete(self, sensor_id, namespace=None):
+		"""
+			Delete the metatags attached to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to delete metatags for
+			@param namespace (string) - Namespace for which to delete metatags
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsDelete was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json".format(sensor_id), "POST", parameters={'namespace':ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def SensorsFind(self, parameters, filters, namespace=None):
+		"""
+			Find sensors based on a number of filters on metatags in a specific namespace
+			
+			@param namespace (string) - Namespace to use in filtering on metatags
+			@param parameters (dictionary) - Dictionary containing additional parameters
+			@param filters (dictionary) - Dictionary containing the filters on metatags
+			
+			@return (bool) - Boolean indicating whetehr SensorsFind was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__("/sensors/find.json?{0}".format(urllib.urlencode(parameters)), "POST", parameters=filters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+	
+	def GroupSensorsFind(self, group_id, parameters, filters, namespace=None):
+		"""
+			Find sensors in a group based on a number of filters on metatags
+			
+			@param group_id (int) - Id of the group in which to find sensors
+			@param namespace (string) - Namespace to use in filtering on metatags
+			@param parameters (dictionary) - Dictionary containing additional parameters
+			@param filters (dictionary) - Dictioanry containing the filters on metatags
+			
+			@return (bool) - Boolean indicating whether GroupSensorsFind was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__("/groups/{0}/sensors/find.json?{1}".format(group_id, urllib.urlencode(parameters)), "POST", parameters=filters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def MetatagDistinctValuesGet(self, metatag_name, namespace=None):
+		"""
+			Find the distinct value of a metatag name in a certain namespace
+			
+			@param metatag_name (string) - Name of the metatag for which to find the distinct values
+			@param namespace (stirng) - Namespace in which to find the distinct values
+			
+			@return (bool) - Boolean indicating whether MetatagDistinctValuesGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/metatag_name/{0}/distinct_values.json", "GET", parameters={'namespace': ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
 			return False
 		
 #=======================
