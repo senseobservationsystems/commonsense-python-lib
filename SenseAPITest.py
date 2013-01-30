@@ -24,7 +24,7 @@ import string
 # credentials with which it will authenticate at 
 # CommonSense. Make sure this file is present!
 try:
-    f = open('credentials_freek.txt', 'r')
+    f = open('credentials_ght.txt', 'r')
 except:
     print 'pieuw'
 creds = json.load(f)
@@ -56,19 +56,26 @@ except:
 AUTHENTICATE_SESSIONID          = True
 AUTHENTICATE_OAUTH              = False
 
-Test_SensorsGet                 = True
+Test_SensorsGet                 = False
 Test_SensorDataGet              = False
 Test_SensorPost                 = True
-Test_SensorDataPost             = True
+Test_SensorDataPost             = False
 Test_ServicesPost               = False
 Test_EventsNotificationsPost    = False
 Test_TriggersPost               = False
 Test_GroupsPost                 = True
-Test_SensorAddToDevice          = True
+Test_GroupsSensorsPost          = True
+Test_SensorAddToDevice          = False
+
+Test_SensorMetatagsPost         = True
+Test_SensorMetatagsGet          = True
+Test_SensorsFind                = True
+Test_GroupSensorsMetatagsGet    = True
+Test_GroupSensorsFind           = True
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-api.setServer('live')
+api.setServer('dev')
 
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
@@ -88,6 +95,18 @@ def run_tests ():
         device_id = add_sensor_to_device(sensor_id)
     if Test_GroupsPost:    
         group_id = create_group()
+    if Test_GroupsSensorsPost:
+        share_sensor_with_group(group_id, sensor_id)
+    if Test_SensorMetatagsPost:
+        create_metatags(sensor_id)
+    if Test_SensorMetatagsGet:
+        get_sensors_metatags()
+    if Test_SensorsFind:
+        find_sensors()
+    if Test_GroupSensorsMetatagsGet:
+        get_group_sensors_metatags(group_id)
+    if Test_GroupSensorsFind:
+        find_group_sensors(group_id)
     if AUTHENTICATE_SESSIONID:
         logout()
     
@@ -324,7 +343,86 @@ def get_group_users (group_id):
     printFunctionEnd()
     
 
+# test sharing a sensor with a group
+def share_sensor_with_group (group_id, sensor_id):
+    printFunctionStart("Test Sharing Sensor with Group")
+    if api.GroupsSensorsPost(group_id, {'sensors':[{'id':sensor_id}]}):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd
+
+
 # test creating metatags
+def create_metatags (sensor_id):
+    printFunctionStart("Test Metatags Post")
+    if api.SensorMetatagsPost(sensor_id, {"metatags":{"greenhouse":["1"], "unit":["awesome"]}}, "testspace"):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
+    
+# test retrieving metatags
+def get_sensors_metatags ():
+    printFunctionStart("Test retrieving sensors with metatags")
+    page = 0;
+    sensors = []
+    while True:
+        if api.SensorsMetatagsGet({'page':page, 'per_page':100, 'sensor_owner':'me', 'details':'full'}, "testspace"):
+            r = json.loads(api.getResponse())
+            sensors.append(r['sensors'])
+            if len(r['sensors']) < 100:
+                break
+            page += 1
+        else:
+            print api.getError()
+            break
+    printFunctionEnd()
+    return sensors    
+    
+    
+# test finding sensors by metatags
+def find_sensors ():
+    printFunctionStart("Test finding sensors by metatags")
+    filters = {'filter':{'metatag_statement_groups':[[{'metatag_name':'greenhouse', 'operator':'equal', 'value':'1'}]], 'sensor_statement_groups':[]}}
+    if api.SensorsFind({'details':'full'}, filters, "testspace"):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
+
+# test getting sensors with metatags in a group
+def get_group_sensors_metatags (group_id):
+    printFunctionStart("Test GroupSensorsMetatagsGet")
+    page = 0;
+    sensors = []
+    while True:
+        if api.GroupSensorsMetatagsGet(group_id, {'page':page, 'per_page':100, 'sensor_owner':'me', 'details':'full'}, "testspace"):
+            r = json.loads(api.getResponse())
+            sensors.append(r['sensors'])
+            if len(r['sensors']) < 100:
+                break
+            page += 1
+        else:
+            print api.getError()
+            break
+    printFunctionEnd()
+    return sensors    
+
+    
+# test finding a sensor in a group
+def find_group_sensors (group_id):
+    printFunctionStart("Test GroupSensorsFind")
+    filters = {'filter':{'metatag_statement_groups':[[{'metatag_name':'greenhouse', 'operator':'equal', 'value':'1'}]], 'sensor_statement_groups':[]}}
+    if api.GroupSensorsFind(group_id, {'details':'full'}, filters, "testspace"):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
+    
 #def add_metatags_to_sensor(sensor_id):
 #    if api.SensorsMetatagsGet("greenhouse", {"details":"full"}):
 #        response = json.loads(api.getResponse())

@@ -534,7 +534,7 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether SensorMetatagsPost was successful
 		"""
 		ns = "default" if namespace is None else namespace
-		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namepsace={1}".format(sensor_id, ns), "POST", parameters=metatags):
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namespace={1}".format(sensor_id, ns), "POST", parameters=metatags):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -1182,6 +1182,10 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 
+#============================
+# G R O U P S  &  U S E R S =
+#============================
+
 	def GroupsUsersGet_Parameters(self):
 		return {'details': 'full'}
 
@@ -1223,6 +1227,54 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
 		if self.__SenseApiCall__('/groups/{group_id}/users/{user_id}.json'.format(group_id=group_id,user_id=user_id), 'DELETE'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+#================================
+# G R O U P S  &  S E N S O R S =
+#================================
+	def GroupsSensorsPost(self, group_id, sensors):
+		"""
+			Share a number of sensors within a group.
+			
+			@param group_id (int) - Id of the group to share sensors with
+			@param sensors (dictionary) - Dictionary containing the sensors to share within the groups
+			
+			@return (bool) - Boolean indicating whether the GroupsSensorsPost call was successful
+		"""
+		if self.__SenseApiCall__("/groups/{0}/sensors.json".format(group_id), "POST", parameters=sensors):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"		
+			return False
+		
+	def GroupsSensorsGet(self, group_id, parameters):
+		"""
+			Retrieve sensors shared within the group.
+			
+			@param group_id (int) - Id of the group to retrieve sensors from
+			@param parameters (dictionary) - Additional parameters for the call
+			
+			@return (bool) - Boolean indicating whether GroupsSensorsGet was successful
+		"""
+		if self.__SenseApiCall("/groups/{0}/sensors.json".format(group_id), "GET", parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def GroupsSensorsDelete(self, group_id, sensor_id):
+		"""
+			Stop sharing a sensor within a group
+			
+			@param group_id (int) - Id of the group to stop sharing the sensor with
+			@param sensor_id (int) - Id of the sensor to stop sharing
+			
+			@return (bool) - Boolean indicating whether GroupsSensorsDelete was successful
+		"""
+		if self.__SenseApiCall__("/groups/{0}/sensors/{1}.json".format(group_id, sensor_id), "DELETE"):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
