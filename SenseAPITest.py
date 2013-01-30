@@ -80,33 +80,56 @@ api.setServer('dev')
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
         login()
+        
     if Test_SensorsGet:
         sensors = get_all_sensors()
+        
     if Test_SensorDataGet:
         get_sensor_data(sensors[0]['id'], 1359385890, 1359472290)
+        
     if Test_SensorPost:
         sensor_id = create_sensor()
+        
     if Test_ServicesPost:
         service_id = create_service(sensor_id)
         set_service_expression(service_id, sensor_id, "test_sensor")
+        
     if Test_SensorDataPost:
         create_sensor_data(sensor_id)
+        
     if Test_SensorAddToDevice:
         device_id = add_sensor_to_device(sensor_id)
+        
     if Test_GroupsPost:    
         group_id = create_group()
+        
     if Test_GroupsSensorsPost:
         share_sensor_with_group(group_id, sensor_id)
+        
     if Test_SensorMetatagsPost:
         create_metatags(sensor_id)
+        
     if Test_SensorMetatagsGet:
         get_sensors_metatags()
+        
     if Test_SensorsFind:
         find_sensors()
+        
     if Test_GroupSensorsMetatagsGet:
         get_group_sensors_metatags(group_id)
+        
     if Test_GroupSensorsFind:
         find_group_sensors(group_id)
+        
+    if Test_GroupsPost:
+        delete_group(group_id)
+        
+    if Test_ServicesPost:
+        delete_service(sensor_id, service_id)
+        
+    if Test_SensorPost:
+        delete_sensor(sensor_id)
+        
     if AUTHENTICATE_SESSIONID:
         logout()
     
@@ -183,6 +206,15 @@ def create_sensor ():
     return sensor_id
 
 
+# delete a sensor
+def delete_sensor(sensor_id):
+    printFunctionStart("Test SensorDelete")
+    if api.SensorsDelete(sensor_id):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+
 # create sensor data
 def create_sensor_data (sensor_id):    
     printFunctionStart("Test SensorDataPost")
@@ -213,6 +245,16 @@ def set_service_expression (service_id, sensor_id, sensor_name):
     printFunctionStart("Test ServicesSetExpression")
     parameters = {'parameters':['_{0}_{1}'.format(sensor_id, sensor_name)]}
     if api.ServicesSetExpression(sensor_id, service_id, parameters):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
+    
+# delete a service
+def delete_service(sensor_id, service_id):
+    printFunctionStart("Test ServicesDelete")
+    if api.ServicesDelete(sensor_id, service_id):
         print api.getResponse()
     else:
         print api.getError()
@@ -319,6 +361,16 @@ def create_group():
     printFunctionEnd()
     return group_id
         
+        
+# delete a group
+def delete_group(group_id):
+    printFunctionStart("Test GroupsDelete")
+    if api.GroupsDelete(group_id):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
         
 # test adding user to group
 def add_user_to_group (user_id, group_id):
