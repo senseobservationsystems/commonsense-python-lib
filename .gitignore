@@ -1,8 +1,7 @@
 .project
 .pydevproject
 credentials.txt
-credentials_freek.txt
-credentials_ght.txt
+credentials*.txt
 html/
 *.html
 *.pyc
