@@ -56,16 +56,16 @@ except:
 AUTHENTICATE_SESSIONID          = True
 AUTHENTICATE_OAUTH              = False
 
-Test_SensorsGet                 = False
-Test_SensorDataGet              = False
+Test_SensorsGet                 = True
+Test_SensorDataGet              = True
 Test_SensorPost                 = True
-Test_SensorDataPost             = False
-Test_ServicesPost               = False
-Test_EventsNotificationsPost    = False
-Test_TriggersPost               = False
+Test_SensorDataPost             = True
+Test_ServicesPost               = True
+Test_EventsNotificationsPost    = True
+Test_TriggersPost               = True
 Test_GroupsPost                 = True
 Test_GroupsSensorsPost          = True
-Test_SensorAddToDevice          = False
+Test_SensorAddToDevice          = True
 
 Test_SensorMetatagsPost         = True
 Test_SensorMetatagsGet          = True
@@ -121,6 +121,9 @@ def run_tests ():
     if Test_GroupSensorsFind:
         find_group_sensors(group_id)
         
+    if Test_GroupsSensorsPost:
+        unshare_sensor_with_group(group_id, sensor_id)
+    
     if Test_GroupsPost:
         delete_group(group_id)
         
@@ -172,7 +175,7 @@ def get_all_sensors():
     while True:
         if api.SensorsGet({'page':page, 'owned':1, 'details':'full'}):
             r = json.loads(api.getResponse())
-            sensors.append(r['sensors'])
+            sensors.extend(r['sensors'])
             if len(r['sensors']) < 100:
                 break
             page += 1
@@ -199,7 +202,7 @@ def create_sensor ():
     sensor_id = -1 
     if api.SensorsPost({'sensor':{'name':'test_sensor', 'device_type':'gyrocopter', 'data_type':'float'}}):
         print api.getResponse()
-        sensor_id = json.loads(api.getResponse())['sensor']['id']
+        sensor_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -233,7 +236,7 @@ def create_service (sensor_id):
     parameters = {'service':{'name':'math_service', 'data_fields':['level']}, 'sensor':{'name':'ChargeNeeded', 'device_type':'ChargeNeeded'}}
     if api.ServicesPost(sensor_id, parameters):
         print api.getResponse()
-        service_id = json.loads(api.getResponse)['service[id]']
+        service_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -268,7 +271,7 @@ def add_sensor_to_device (sensor_id):
     parameters = {'device':{'type':'redXI', 'uuid':'bla:diebla'}}
     if api.SensorAddToDevice(sensor_id, parameters):
         print api.getResponse()
-        device_id = json.loads(api.getResponse())['device']['id']
+        device_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -282,7 +285,7 @@ def create_trigger ():
     parameters = {'trigger':{'name':'the signal', 'inactivity':60}}
     if api.TriggersPost(parameters):
         print api.getResponse()
-        trigger_id = json.loads(api.getResponse())['trigger']['id']
+        trigger_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -307,7 +310,7 @@ def create_notification ():
     parameters = {'notification':{'type':'email', 'text':'inactivity!', 'destination':'jondar@blackmagic.com'}} 
     if api.NotificationsPost(parameters):
         print api.getResponse()
-        notification_id = json.loads(api.getResponse)['notification']['id']
+        notification_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -353,9 +356,10 @@ def create_group():
     if api.GroupsPost({'group':{'name':'WarmGroup','description':'Love and Warmth','public':True,'hidden':True}}):
         headers = api.getResponseHeaders()
         #headers are case insensitive, map to lower case for easy lookup
-        headers = dict(zip(map(string.lower, headers.keys()), headers.values()))
-        location = headers.get('location')
-        group_id = location.split('/')[-1]
+        #headers = dict(zip(map(string.lower, headers.keys()), headers.values()))
+        #location = headers.get('location')
+        #group_id = location.split('/')[-1]
+        group_id = api.getLocationHeader()
     else:
         print api.getError()
     printFunctionEnd()
@@ -402,7 +406,17 @@ def share_sensor_with_group (group_id, sensor_id):
         print api.getResponse()
     else:
         print api.getError()
-    printFunctionEnd
+    printFunctionEnd()
+
+
+# unshare sensor with a group
+def unshare_sensor_with_group (group_id, sensor_id):
+    printFunctionStart("Test Unsharing Sensor with Group")
+    if api.GroupsSensorsDelete(group_id, sensor_id):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
 
 
 # test creating metatags

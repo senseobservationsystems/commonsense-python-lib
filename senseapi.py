@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import md5, urllib, httplib, json, socket, oauth.oauth as oauth, urlparse
+import md5, urllib, httplib, json, socket, oauth.oauth as oauth, urlparse, string
 
 class SenseAPI:
 	"""
@@ -117,6 +117,15 @@ class SenseAPI:
 		"""
 		return self.__error__
 
+	def getLocationHeader(self):
+		"""
+			Retrieve the integer that should be present in the Location header after creating an object in CommonSense
+			
+			@return (string) - String containing the id of the created object, or empty if nothing was created
+		"""
+		location = self.__headers__.get('location')
+		return location.split('/')[-1] 
+	
 #=======================================
 	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
@@ -188,6 +197,8 @@ class SenseAPI:
 		
 		for h in resp_headers:
 			self.__headers__.update({h[0]:h[1]})
+		self.__headers__ = dict(zip(map(string.lower, self.__headers__.keys()), self.__headers__.values()))
+
 		
 		if self.__verbose__:
 			print "===================CALL==================="
@@ -1294,4 +1305,6 @@ def MD5Hash(password):
 	md5_password = md5.new(password)
 	password_md5 = md5_password.hexdigest()
 	return password_md5
+
+
 	
