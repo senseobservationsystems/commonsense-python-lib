@@ -117,14 +117,14 @@ class SenseAPI:
 		"""
 		return self.__error__
 
-	def getLocationHeader(self):
+	def getLocationId(self):
 		"""
 			Retrieve the integer that should be present in the Location header after creating an object in CommonSense
 			
 			@return (string) - String containing the id of the created object, or empty if nothing was created
 		"""
 		location = self.__headers__.get('location')
-		return location.split('/')[-1] 
+		return location.split('/')[-1] if location is not None else None;
 	
 #=======================================
 	# B A S E  A P I  C A L L  M E T H O D =

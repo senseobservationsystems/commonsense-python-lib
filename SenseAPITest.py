@@ -202,7 +202,7 @@ def create_sensor ():
     sensor_id = -1 
     if api.SensorsPost({'sensor':{'name':'test_sensor', 'device_type':'gyrocopter', 'data_type':'float'}}):
         print api.getResponse()
-        sensor_id = api.getLocationHeader()
+        sensor_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
@@ -236,7 +236,7 @@ def create_service (sensor_id):
     parameters = {'service':{'name':'math_service', 'data_fields':['level']}, 'sensor':{'name':'ChargeNeeded', 'device_type':'ChargeNeeded'}}
     if api.ServicesPost(sensor_id, parameters):
         print api.getResponse()
-        service_id = api.getLocationHeader()
+        service_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
@@ -271,7 +271,7 @@ def add_sensor_to_device (sensor_id):
     parameters = {'device':{'type':'redXI', 'uuid':'bla:diebla'}}
     if api.SensorAddToDevice(sensor_id, parameters):
         print api.getResponse()
-        device_id = api.getLocationHeader()
+        device_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
@@ -285,7 +285,7 @@ def create_trigger ():
     parameters = {'trigger':{'name':'the signal', 'inactivity':60}}
     if api.TriggersPost(parameters):
         print api.getResponse()
-        trigger_id = api.getLocationHeader()
+        trigger_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
@@ -310,7 +310,7 @@ def create_notification ():
     parameters = {'notification':{'type':'email', 'text':'inactivity!', 'destination':'jondar@blackmagic.com'}} 
     if api.NotificationsPost(parameters):
         print api.getResponse()
-        notification_id = api.getLocationHeader()
+        notification_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
@@ -359,7 +359,7 @@ def create_group():
         #headers = dict(zip(map(string.lower, headers.keys()), headers.values()))
         #location = headers.get('location')
         #group_id = location.split('/')[-1]
-        group_id = api.getLocationHeader()
+        group_id = api.getLocationId()
     else:
         print api.getError()
     printFunctionEnd()
