@@ -24,7 +24,7 @@ import string
 # credentials with which it will authenticate at 
 # CommonSense. Make sure this file is present!
 try:
-    f = open('credentials_ght.txt', 'r')
+    f = open('credentials.txt', 'r')
 except:
     print 'pieuw'
 creds = json.load(f)
