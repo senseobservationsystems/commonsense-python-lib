@@ -741,7 +741,22 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+		
+	def ServicesGetExpression(self, sensor_id, service_id):
+		"""
+			Get expression for the math service.
+			
+			@param sensor_id (int) - Id of the sensor to which the service is connected
+			@param service_id (int) - Id of the service for which to get the expression
+			
+			@return (bool) - Boolean indicating whether ServicesGetExpression was successful 
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/GetExpression.json'.format(sensor_id, service_id), "GET"):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
 	def ServicesSet_Parameters (self):
 			return {'parameters':[]}
 		
@@ -749,7 +764,7 @@ class SenseAPI:
 		"""
 			Set expression for the math service.
 			
-			@param sensors_id (int) - Sensor id of the sensor the service is connected to.
+			@param sensor_id (int) - Sensor id of the sensor the service is connected to.
 			@param service_id (int) - Service id of the service for which to set the expression.
 			@param parameters (dictonary) - Parameters to set the expression of the math service.
 					@note - http://www.sense-os.nl/85?nodeId=85&selectedId=11887
