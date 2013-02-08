@@ -61,7 +61,7 @@ class SenseAPI:
 		"""
 			Set server to interact with.
 			
-			@param server (string) - 'live' for live server, 'dev' for test server
+			@param server (string) - 'live' for live server, 'dev' for test server, 'rc' for release candidate
 			
 			@return (boolean) - Boolean indicating whether setServer succeeded
 		"""  
@@ -76,8 +76,13 @@ class SenseAPI:
 			#the dev server doesn't support https
 			self.setUseHTTPS(False)
 			return True
+		elif server == 'rc':
+			self.__server__ = server
+			self.__server_url__ = 'api.rc.dev.sense-os.nl'
+			self.setUseHTTPS(False)
 		else:
 			return False
+		
 	def setUseHTTPS(self, enable=True):
 		"""
 			Set whether to use https or http.
