@@ -75,7 +75,7 @@ Test_GroupSensorsFind           = True
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-api.setServer('live')
+api.setServer('rc')
 
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
@@ -84,9 +84,6 @@ def run_tests ():
     if Test_SensorsGet:
         sensors = get_all_sensors()
         
-    if Test_SensorDataGet:
-        if len(sensors) > 0:
-            get_sensor_data(sensors[0]['id'], 1359385890, 1359472290)
         
     if Test_SensorPost:
         sensor_id = create_sensor()
@@ -97,6 +94,12 @@ def run_tests ():
         
     if Test_SensorDataPost:
         create_sensor_data(sensor_id)
+
+    if Test_SensorDataGet:
+        if len(sensors) > 0:
+            get_sensor_data(sensors[0]['id'], 1359385890, 1359472290)
+        else:
+	    print "No sensors to test SensorDataGet"
         
     if Test_SensorAddToDevice:
         device_id = add_sensor_to_device(sensor_id)
