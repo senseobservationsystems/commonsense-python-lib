@@ -706,7 +706,7 @@ class SenseAPI:
 					@note - http://www.sense-os.nl/53?nodeId=53&selectedId=11887
 		"""
 		if self.__SenseApiCall__('/sensors/{0}/data.json'.format(sensor_id), 'POST', parameters=parameters):
-			return True, {}
+			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
@@ -721,7 +721,7 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether SensorsDataPost was successful.
 		"""
 		if self.__SenseApiCall__('/sensors/data.json', 'POST', parameters=parameters):
-			return True, {}
+			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
