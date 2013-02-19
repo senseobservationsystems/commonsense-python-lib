@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import md5, urllib, httplib, json, socket, oauth.oauth as oauth, urlparse
+import md5, urllib, httplib, json, socket, oauth.oauth as oauth, urlparse, string
 
 class SenseAPI:
 	"""
@@ -26,6 +26,7 @@ class SenseAPI:
 		"""
 			Constructor function.
 		"""
+		self.__api_key__ = ""
 		self.__session_id__ = ""
 		self.__status__ = 0
 		self.__headers__ = {}
@@ -37,6 +38,7 @@ class SenseAPI:
 		self.__authentication__ = 'not_authenticated'
 		self.__oauth_consumer__ = {}
 		self.__oauth_token__ = {}
+		self.__use_https__ = True
 
 #===============================================
 # C O N F I G U R A T I O N  F U N C T I O N S =
@@ -59,23 +61,37 @@ class SenseAPI:
 		"""
 			Set server to interact with.
 			
-			@param server (string) - 'live' for live server, 'dev' for test server
+			@param server (string) - 'live' for live server, 'dev' for test server, 'rc' for release candidate
 			
 			@return (boolean) - Boolean indicating whether setServer succeeded
 		"""  
 		if server == 'live':
 			self.__server__ = server
 			self.__server_url__ = 'api.sense-os.nl'
+			self.setUseHTTPS()
 			return True
 		elif server == 'dev':
 			self.__server__ = server
 			self.__server_url__ = 'api.dev.sense-os.nl'
+			#the dev server doesn't support https
+			self.setUseHTTPS(False)
 			return True
+		elif server == 'rc':
+			self.__server__ = server
+			self.__server_url__ = 'api.rc.dev.sense-os.nl'
+			self.setUseHTTPS(False)
 		else:
 			return False
 		
+	def setUseHTTPS(self, enable=True):
+		"""
+			Set whether to use https or http.
+			@param enable (boolean) - True to enable https (default), False to use http
+		"""
+		self.__use_https__ = enable
+		
 	def __setAuthenticationMethod__(self, method):
-		if not (method == 'session_id' or method == 'oauth' or method == 'authenticating_session_id' or method == 'authenticating_oauth' or method == 'not_authenticated'):
+		if not (method in ['session_id','oauth','authenticating_session_id','authenticating_oauth','not_authenticated','api_key']):
 			return False
 		else:
 			self.__authentication__ = method
@@ -108,9 +124,26 @@ class SenseAPI:
 			@return (string) - The literal response body, which is likely to be in json format
 		"""
 		return self.__response__
+	
+	def getError(self):
+		"""
+			Retrieve the error value
+			
+			@return (string) - The most recent error message
+		"""
+		return self.__error__
 
+	def getLocationId(self):
+		"""
+			Retrieve the integer that should be present in the Location header after creating an object in CommonSense
+			
+			@return (string) - String containing the id of the created object, or empty if nothing was created
+		"""
+		location = self.__headers__.get('location')
+		return location.split('/')[-1] if location is not None else None;
+	
 #=======================================
-# B A S E  A P I  C A L L  M E T H O D =
+	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
 	def __SenseApiCall__ (self, url, method, parameters=None, headers={}):
 		heads = headers
@@ -154,11 +187,24 @@ class SenseAPI:
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
+		elif self.__authentication__ == 'api_key':
+			if parameters is None:
+				parameters = {}
+			parameters['API_KEY'] = self.__api_key__
+			if method == 'GET' or method == 'DELETE':
+				heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
+				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+			else:
+				heads.update({"Content-type": "application/json", "Accept":"*"})
+				body = json.dumps(parameters)
 		else:
 			self.__status__ = 418
 			return False
 
-		connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		if self.__use_https__:
+			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+		else:
+			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
 			
 		try:
 			connection.request(method, http_url, body, heads);
@@ -177,6 +223,8 @@ class SenseAPI:
 		
 		for h in resp_headers:
 			self.__headers__.update({h[0]:h[1]})
+		self.__headers__ = dict(zip(map(string.lower, self.__headers__.keys()), self.__headers__.values()))
+
 		
 		if self.__verbose__:
 			print "===================CALL==================="
@@ -195,6 +243,17 @@ class SenseAPI:
 		else:
 			return False
 		
+#=============================================
+# A P I _ K E Y  A U T H E N T I C A T I O N =
+#=============================================
+	def SetApiKey(self, api_key):
+		"""
+			Set the api key.
+			
+			@param api_key (string) - A valid api key to authenticate with CommonSense
+		"""
+		self.__setAuthenticationMethod__('api_key')
+		self.__api_key__ = api_key
 #==================================================
 # S E S S I O N  I D  A U T H E N T I C A T I O N =
 #==================================================
@@ -450,12 +509,169 @@ class SenseAPI:
 			
 			@param parameters (dictionary) - Dictionary containing the sensor parameters to be updated.
 					
-			@return (bool) - Boolean indicating whether SensorsPut was succsesful.
+			@return (bool) - Boolean indicating whether SensorsPut was successful.
 		"""
 		if self.__SenseApiCall__('/sensors/{0}.json'.format(sensor_id), 'PUT', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unscuccessful"
+			return False
+		
+#==================
+# M E T A T A G S =
+#==================
+	def SensorsMetatagsGet(self, parameters, namespace=None):
+		"""
+			Retrieve sensors with their metatags.
+			
+			@param namespace (string) - Namespace for which to retrieve the metatags.
+			@param parameters (dictionary - Dictionary containing further parameters.
+			
+			@return (bool) - Boolean indicating whether SensorsMetatagsget was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__('/sensors/metatags.json','GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def GroupSensorsMetatagsGet(self, group_id, parameters, namespace=None):
+		"""
+			Retrieve sensors in a group with their metatags.
+			
+			@param group_id (int) - Group id for which to retrieve metatags.
+			@param namespace (string) - Namespace for which to retrieve the metatags.
+			@param parameters (dictionary) - Dictionary containing further parameters.
+			
+			@return (bool) - Boolean indicating whether GroupSensorsMetatagsGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__('/groups/{0}/sensors/metatags.json'.format(group_id), 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorMetatagsGet(self, sensor_id, namespace=None):
+		"""
+			Retrieve the metatags of a sensor.
+			
+			@param sensor_id (int) - Id of the sensor to retrieve metatags from
+			@param namespace (stirng) - Namespace for which to retrieve metatags.
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__('/sensors/{0}/metatags.json'.format(sensor_id), 'GET', parameters={'namespace': ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def SensorMetatagsPost(self, sensor_id, metatags, namespace=None):
+		"""
+			Attach metatags to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to attach metatags to
+			@param namespace (string) - Namespace for which to attach metatags
+			@param metatags (dictionary) - Metatags to attach to the sensor
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsPost was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namespace={1}".format(sensor_id, ns), "POST", parameters=metatags):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorMetatagsPut(self, sensor_id, metatags, namespace=None):
+		"""
+			Overwrite the metatags attached to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to overwrite metatags for
+			@param namespace (string) - Namespace for which to overwrite metatags
+			@param metatags (dictionary) - Metatags to overwrite the existing metatags with
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsPut was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namespace={1}".format(sensor_id, ns), "POST", parameters=metatags):
+			return True
+		else:
+			self.__error__ ="api call unsuccessful"
+			return False
+		
+	def SensorMetatagsDelete(self, sensor_id, namespace=None):
+		"""
+			Delete the metatags attached to a sensor for a specific namespace
+			
+			@param sensor_id (int) - Id of the sensor to delete metatags for
+			@param namespace (string) - Namespace for which to delete metatags
+			
+			@return (bool) - Boolean indicating whether SensorMetatagsDelete was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/sensors/{0}/metatags.json".format(sensor_id), "POST", parameters={'namespace':ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def SensorsFind(self, parameters, filters, namespace=None):
+		"""
+			Find sensors based on a number of filters on metatags in a specific namespace
+			
+			@param namespace (string) - Namespace to use in filtering on metatags
+			@param parameters (dictionary) - Dictionary containing additional parameters
+			@param filters (dictionary) - Dictionary containing the filters on metatags
+			
+			@return (bool) - Boolean indicating whetehr SensorsFind was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__("/sensors/find.json?{0}".format(urllib.urlencode(parameters)), "POST", parameters=filters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+	
+	def GroupSensorsFind(self, group_id, parameters, filters, namespace=None):
+		"""
+			Find sensors in a group based on a number of filters on metatags
+			
+			@param group_id (int) - Id of the group in which to find sensors
+			@param namespace (string) - Namespace to use in filtering on metatags
+			@param parameters (dictionary) - Dictionary containing additional parameters
+			@param filters (dictionary) - Dictioanry containing the filters on metatags
+			
+			@return (bool) - Boolean indicating whether GroupSensorsFind was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		parameters['namespace'] = ns
+		if self.__SenseApiCall__("/groups/{0}/sensors/find.json?{1}".format(group_id, urllib.urlencode(parameters)), "POST", parameters=filters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def MetatagDistinctValuesGet(self, metatag_name, namespace=None):
+		"""
+			Find the distinct value of a metatag name in a certain namespace
+			
+			@param metatag_name (string) - Name of the metatag for which to find the distinct values
+			@param namespace (stirng) - Namespace in which to find the distinct values
+			
+			@return (bool) - Boolean indicating whether MetatagDistinctValuesGet was successful
+		"""
+		ns = "default" if namespace is None else namespace
+		if self.__SenseApiCall__("/metatag_name/{0}/distinct_values.json", "GET", parameters={'namespace': ns}):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
 			return False
 		
 #=======================
@@ -490,7 +706,7 @@ class SenseAPI:
 					@note - http://www.sense-os.nl/53?nodeId=53&selectedId=11887
 		"""
 		if self.__SenseApiCall__('/sensors/{0}/data.json'.format(sensor_id), 'POST', parameters=parameters):
-			return True, {}
+			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
@@ -505,7 +721,7 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether SensorsDataPost was successful.
 		"""
 		if self.__SenseApiCall__('/sensors/data.json', 'POST', parameters=parameters):
-			return True, {}
+			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
@@ -562,7 +778,22 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+		
+	def ServicesGetExpression(self, sensor_id, service_id):
+		"""
+			Get expression for the math service.
+			
+			@param sensor_id (int) - Id of the sensor to which the service is connected
+			@param service_id (int) - Id of the service for which to get the expression
+			
+			@return (bool) - Boolean indicating whether ServicesGetExpression was successful 
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/GetExpression.json'.format(sensor_id, service_id), "GET"):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
 	def ServicesSet_Parameters (self):
 			return {'parameters':[]}
 		
@@ -570,7 +801,7 @@ class SenseAPI:
 		"""
 			Set expression for the math service.
 			
-			@param sensors_id (int) - Sensor id of the sensor the service is connected to.
+			@param sensor_id (int) - Sensor id of the sensor the service is connected to.
 			@param service_id (int) - Service id of the service for which to set the expression.
 			@param parameters (dictonary) - Parameters to set the expression of the math service.
 					@note - http://www.sense-os.nl/85?nodeId=85&selectedId=11887
@@ -1014,6 +1245,10 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 
+#============================
+# G R O U P S  &  U S E R S =
+#============================
+
 	def GroupsUsersGet_Parameters(self):
 		return {'details': 'full'}
 
@@ -1059,6 +1294,69 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+
+#==============
+# S T A T E S =
+#==============
+	def StatesDefaultCheck(self):
+		"""
+			Create default states.
+			@return (bool) - Boolean indicating wether this request was successful.
+		"""
+		if self.__SenseApiCall__('/states/default/check.json', 'GET'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+		
+#================================
+# G R O U P S  &  S E N S O R S =
+#================================
+	def GroupsSensorsPost(self, group_id, sensors):
+		"""
+			Share a number of sensors within a group.
+			
+			@param group_id (int) - Id of the group to share sensors with
+			@param sensors (dictionary) - Dictionary containing the sensors to share within the groups
+			
+			@return (bool) - Boolean indicating whether the GroupsSensorsPost call was successful
+		"""
+		if self.__SenseApiCall__("/groups/{0}/sensors.json".format(group_id), "POST", parameters=sensors):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"		
+			return False
+		
+	def GroupsSensorsGet(self, group_id, parameters):
+		"""
+			Retrieve sensors shared within the group.
+			
+			@param group_id (int) - Id of the group to retrieve sensors from
+			@param parameters (dictionary) - Additional parameters for the call
+			
+			@return (bool) - Boolean indicating whether GroupsSensorsGet was successful
+		"""
+		if self.__SenseApiCall("/groups/{0}/sensors.json".format(group_id), "GET", parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def GroupsSensorsDelete(self, group_id, sensor_id):
+		"""
+			Stop sharing a sensor within a group
+			
+			@param group_id (int) - Id of the group to stop sharing the sensor with
+			@param sensor_id (int) - Id of the sensor to stop sharing
+			
+			@return (bool) - Boolean indicating whether GroupsSensorsDelete was successful
+		"""
+		if self.__SenseApiCall__("/groups/{0}/sensors/{1}.json".format(group_id, sensor_id), "DELETE"):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 #==================================
 # N O N  C L A S S  M E T H O D S =
@@ -1074,4 +1372,6 @@ def MD5Hash(password):
 	md5_password = md5.new(password)
 	password_md5 = md5_password.hexdigest()
 	return password_md5
+
+
 	
