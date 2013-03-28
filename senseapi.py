@@ -146,7 +146,8 @@ class SenseAPI:
 	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
 	def __SenseApiCall__ (self, url, method, parameters=None, headers={}):
-		heads = headers
+		heads = {}
+		heads.update(headers)
 		body = ''
 		http_url = url
 		
@@ -155,6 +156,7 @@ class SenseAPI:
 			return False
 		
 		elif self.__authentication__ == 'authenticating_oauth':
+			"HELLO"
 			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
 			if not parameters is None:
@@ -179,6 +181,7 @@ class SenseAPI:
 					body = json.dumps(parameters)
 			
 		elif self.__authentication__ == 'session_id':
+			print "YUP!"
 			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
@@ -187,6 +190,7 @@ class SenseAPI:
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
+					
 		elif self.__authentication__ == 'api_key':
 			if parameters is None:
 				parameters = {}
@@ -197,11 +201,14 @@ class SenseAPI:
 			else:
 				heads.update({"Content-type": "application/json", "Accept":"*"})
 				body = json.dumps(parameters)
+				
 		else:
 			self.__status__ = 418
 			return False
 
-		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth':
+		print heads
+
+		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth' and not self.__authentication__ == 'oauth':
 			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
 		else:
 			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
