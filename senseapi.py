@@ -201,7 +201,7 @@ class SenseAPI:
 			self.__status__ = 418
 			return False
 
-		if self.__use_https__:
+		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth':
 			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
 		else:
 			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
@@ -374,8 +374,11 @@ class SenseAPI:
 		
 	# first obtain a request token
 		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback=oauth_callback, http_url='http://api.sense-os.nl/oauth/request_token')
-		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
+																	http_method = 'GET',\
+																 	callback=oauth_callback,\
+																 	http_url='http://api.sense-os.nl/oauth/request_token')
+		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)		
 		
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
@@ -395,8 +398,9 @@ class SenseAPI:
 		
 		if self.__SenseApiCall__('/oauth/provider_authorize', 'POST', parameters=parameters):
 			if self.__status__ == 302:
-				response = urlparse.parse_qs(self.__headers__['location'])
-				self.__oauth_token__.verifier = response['oauth_verifier'][0]
+				response = urlparse.parse_qs(urlparse.urlparse(self.__headers__['location'])[4])
+				verifier = response['oauth_verifier'][0]
+				self.__oauth_token__.set_verifier(verifier)
 			else:
 				self.__setAuthenticationMethod__('session_id')
 				self.__error__ = "error authorizing application"
@@ -407,7 +411,11 @@ class SenseAPI:
 			return False
 		
 	#third, obtain access token
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback='', token=self.__oauth_token__, http_url='http://api.sense-os.nl/oauth/access_token')
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
+																 	token=self.__oauth_token__,\
+																 	callback='',\
+																 	verifier=self.__oauth_token__.verifier,\
+																 	http_url='http://api.sense-os.nl/oauth/access_token')
 		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
 		
 		parameters = []
