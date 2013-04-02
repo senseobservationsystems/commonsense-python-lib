@@ -346,8 +346,8 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether the provided credentials were successfully authenticated
 		"""
-		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		self.__oauth_token__ 	= oauth.OAuthToken(oauth_token_key, oauth_token_secret)
+		self.__oauth_consumer__ = oauth.OAuthConsumer(str(oauth_consumer_key), str(oauth_consumer_secret))
+		self.__oauth_token__ 	= oauth.OAuthToken(str(oauth_token_key), str(oauth_token_secret))
 		self.__authentication__ = 'oauth'
 		if self.__SenseApiCall__('/users/current.json', 'GET'):
 			return True
@@ -364,7 +364,7 @@ class SenseAPI:
 			@param oauth_consumer_key (string) - A valid oauth consumer key obtained from CommonSense
 			@param oauth_consumer_secret (string) - A valid oauth consumer secret obtained from CommonSense
 		"""
-		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
+		self.__oauth_consumer__ = oauth.OAuthConsumer(str(oauth_consumer_key), str(oauth_consumer_secret))
 
 	def OauthSetToken(self, token_key, token_secret, token_verifier=None):
 		"""
@@ -373,9 +373,9 @@ class SenseAPI:
 			@param token_verifier (string) - A valid oauth token verifier obtained from CommonSense
 		"""
 		
-		self.__oauth_token__ = oauth.OAuthToken(token_key, token_secret)
+		self.__oauth_token__ = oauth.OAuthToken(str(token_key), str(token_secret))
 		if not token_verifier == None:
-			self.__oauth_token__.set_verifier(token_verifier)
+			self.__oauth_token__.set_verifier(str(token_verifier))
 
 	def OauthGetRequestToken(self, oauth_callback='http://www.sense-os.nl'):
 		"""
