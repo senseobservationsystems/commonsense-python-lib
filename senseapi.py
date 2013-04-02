@@ -156,8 +156,6 @@ class SenseAPI:
 			return False
 		
 		elif self.__authentication__ == 'authenticating_oauth':
-			"HELLO"
-			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
 			if not parameters is None:
 				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
@@ -181,7 +179,6 @@ class SenseAPI:
 					body = json.dumps(parameters)
 			
 		elif self.__authentication__ == 'session_id':
-			print "YUP!"
 			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
@@ -421,6 +418,9 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether OauthGetRequestToken was successful
 		"""
+		
+		self.__setAuthenticationMethod__('authenticating_oauth')
+
 		# obtain access token
 		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
 																 	token=self.__oauth_token__,\
