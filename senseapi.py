@@ -146,7 +146,8 @@ class SenseAPI:
 	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
 	def __SenseApiCall__ (self, url, method, parameters=None, headers={}):
-		heads = headers
+		heads = {}
+		heads.update(headers)
 		body = ''
 		http_url = url
 		
@@ -155,7 +156,6 @@ class SenseAPI:
 			return False
 		
 		elif self.__authentication__ == 'authenticating_oauth':
-			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
 			if not parameters is None:
 				http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
@@ -187,6 +187,7 @@ class SenseAPI:
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
+					
 		elif self.__authentication__ == 'api_key':
 			if parameters is None:
 				parameters = {}
@@ -197,11 +198,14 @@ class SenseAPI:
 			else:
 				heads.update({"Content-type": "application/json", "Accept":"*"})
 				body = json.dumps(parameters)
+				
 		else:
 			self.__status__ = 418
 			return False
 
-		if self.__use_https__:
+		print heads
+
+		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth' and not self.__authentication__ == 'oauth':
 			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
 		else:
 			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
@@ -342,8 +346,8 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether the provided credentials were successfully authenticated
 		"""
-		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		self.__oauth_token__ 	= oauth.OAuthToken(oauth_token_key, oauth_token_secret)
+		self.__oauth_consumer__ = oauth.OAuthConsumer(str(oauth_consumer_key), str(oauth_consumer_secret))
+		self.__oauth_token__ 	= oauth.OAuthToken(str(oauth_token_key), str(oauth_token_secret))
 		self.__authentication__ = 'oauth'
 		if self.__SenseApiCall__('/users/current.json', 'GET'):
 			return True
@@ -354,28 +358,44 @@ class SenseAPI:
 #=======================================
 # O A U T H  A U T H O R I Z A T I O N =
 #=======================================
-	def OauthAuthorizeApplication(self, oauth_consumer_key, oauth_consumer_secret, oauth_duration='hour', oauth_callback='http://www.sense-os.nl'):
+
+	def OauthSetConsumer(self, oauth_consumer_key, oauth_consumer_secret):
 		"""
-			Authorize an application using oauth. If this function returns True, the obtained oauth token can be retrieved using getResponse and will be in url-parameters format.
-			TODO: allow the option to ask the user himself for permission, instead of doing this automatically. Especially important for web applications.
+			@param oauth_consumer_key (string) - A valid oauth consumer key obtained from CommonSense
+			@param oauth_consumer_secret (string) - A valid oauth consumer secret obtained from CommonSense
+		"""
+		self.__oauth_consumer__ = oauth.OAuthConsumer(str(oauth_consumer_key), str(oauth_consumer_secret))
+
+	def OauthSetToken(self, token_key, token_secret, token_verifier=None):
+		"""
+			@param token_key (string) - A valid oauth token key obtained from CommonSense
+			@param token_secret (string) - A valid oauth token secret obtained from CommonSense
+			@param token_verifier (string) - A valid oauth token verifier obtained from CommonSense
+		"""
+		
+		self.__oauth_token__ = oauth.OAuthToken(str(token_key), str(token_secret))
+		if not token_verifier == None:
+			self.__oauth_token__.set_verifier(str(token_verifier))
+
+	def OauthGetRequestToken(self, oauth_callback='http://www.sense-os.nl'):
+		"""
+			Obtain temporary credentials at CommonSense. If this function returns True, the clients __oauth_token__ member
+			contains the temporary oauth request token.
 			
 			@param oauth_consumer_key (string) - A valid oauth consumer key obtained from CommonSense
 			@param oauth_consumer_secret (string) - A valid oauth consumer secret obtained from CommonSense
-			@param oauth_duration (string) (optional) -'hour', 'day', 'week', 'year', 'forever'
 			@param oauth_callback (string) (optional) - Oauth callback url
 			
-			@return (boolean) - Boolean indicating whether OauthAuthorizeApplication was successful
+			@return (boolean) - Boolean indicating whether OauthGetRequestToken was successful
 		"""
-		if self.__session_id__ == '':
-			self.__error__ = "not logged in"
-			return False
-		
 		self.__setAuthenticationMethod__('authenticating_oauth')
 		
-	# first obtain a request token
-		self.__oauth_consumer__ = oauth.OAuthConsumer(oauth_consumer_key, oauth_consumer_secret)
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback=oauth_callback, http_url='http://api.sense-os.nl/oauth/request_token')
-		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)
+	# obtain a request token
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
+																	http_method = 'GET',\
+																 	callback=oauth_callback,\
+																 	http_url='http://api.sense-os.nl/oauth/request_token')
+		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)		
 		
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
@@ -385,29 +405,28 @@ class SenseAPI:
 		if self.__SenseApiCall__('/oauth/request_token', 'GET', parameters=parameters):
 			response = urlparse.parse_qs(self.__response__)
 			self.__oauth_token__ = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
+			return True
 		else:
-			self.__setAuthenticationMethod__('session_id')
+			self.__setAuthenticationMethod__('not_authenticated')
 			self.__error__ = "error getting request token"
 			return False
+
+	def OauthGetAccessToken(self):
+		"""
+			Use token_verifier to obtain an access token for the user. If this function returns True, the clients __oauth_token__ member
+			contains the access token. 
+			
+			@return (boolean) - Boolean indicating whether OauthGetRequestToken was successful
+		"""
 		
-	#second, automatically get authorization for the application
-		parameters 	= {'oauth_token':self.__oauth_token__.key, 'tok_expir':self.__OauthGetTokExpir__(oauth_duration), 'action':'ALLOW', 'session_id':self.__session_id__}
-		
-		if self.__SenseApiCall__('/oauth/provider_authorize', 'POST', parameters=parameters):
-			if self.__status__ == 302:
-				response = urlparse.parse_qs(self.__headers__['location'])
-				self.__oauth_token__.verifier = response['oauth_verifier'][0]
-			else:
-				self.__setAuthenticationMethod__('session_id')
-				self.__error__ = "error authorizing application"
-				return False
-		else:
-			self.__setAuthenticationMethod__('session_id')
-			self.__error__ = "error authorizing application"
-			return False
-		
-	#third, obtain access token
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, callback='', token=self.__oauth_token__, http_url='http://api.sense-os.nl/oauth/access_token')
+		self.__setAuthenticationMethod__('authenticating_oauth')
+
+		# obtain access token
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
+																 	token=self.__oauth_token__,\
+																 	callback='',\
+																 	verifier=self.__oauth_token__.verifier,\
+																 	http_url='http://api.sense-os.nl/oauth/access_token')
 		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
 		
 		parameters = []
@@ -423,8 +442,39 @@ class SenseAPI:
 		else:
 			self.__setAuthenticationMethod__('session_id')
 			self.__error__ = "error getting access token"
-			return False		
-
+			return False
+	
+	def OauthAuthorizeApplication(self, oauth_duration='hour'):
+		"""
+			Authorize an application using oauth. If this function returns True, the obtained oauth token can be retrieved using getResponse and will be in url-parameters format.
+			TODO: allow the option to ask the user himself for permission, instead of doing this automatically. Especially important for web applications.
+			
+			@param oauth_duration (string) (optional) -'hour', 'day', 'week', 'year', 'forever'
+			
+			@return (boolean) - Boolean indicating whether OauthAuthorizeApplication was successful
+		"""
+		if self.__session_id__ == '':
+			self.__error__ = "not logged in"
+			return False
+		
+	# automatically get authorization for the application
+		parameters 	= {'oauth_token':self.__oauth_token__.key, 'tok_expir':self.__OauthGetTokExpir__(oauth_duration), 'action':'ALLOW', 'session_id':self.__session_id__}
+		
+		if self.__SenseApiCall__('/oauth/provider_authorize', 'POST', parameters=parameters):
+			if self.__status__ == 302:
+				response = urlparse.parse_qs(urlparse.urlparse(self.__headers__['location'])[4])
+				verifier = response['oauth_verifier'][0]
+				self.__oauth_token__.set_verifier(verifier)
+				return True
+			else:
+				self.__setAuthenticationMethod__('session_id')
+				self.__error__ = "error authorizing application"
+				return False
+		else:
+			self.__setAuthenticationMethod__('session_id')
+			self.__error__ = "error authorizing application"
+			return False
+		
 	def __OauthGetTokExpir__ (self, duration):
 		if duration == 'hour':
 			return 1
