@@ -1408,6 +1408,44 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 		
+
+#===============================
+# D A T A  P R O C E S S O R S =
+#===============================
+	def DataProcessorsGet_Parameters(self):
+		return {}
+
+	def DataProcessorsGet(self, parameters):
+		"""
+			List the users data processors.
+			
+			@param parameters (dictonary) - Dictionary containing the parameters of the request.
+									
+			@return (bool) - Boolean indicating whether this call was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors.json', 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def DataProcessorsPost_Parameters(self):
+		return {"dataprocessor":{"command":"disp(rand);", "execution_interval":60}, "sensor":{"name":"random", "data_type":"float"}}
+	def DataProcessorsPost(self, parameters):
+		"""
+			Create a data processor in CommonSense.
+			
+			@param parameters (dictonary) - Dictionary containing all paramters of the request.
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors.json', 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+
 #==================================
 # N O N  C L A S S  M E T H O D S =
 #==================================
