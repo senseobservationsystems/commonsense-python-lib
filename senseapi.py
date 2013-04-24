@@ -168,7 +168,6 @@ class SenseAPI:
 		elif self.__authentication__ == 'oauth':
 			oauth_url = 'http://{0}{1}'.format(self.__server_url__, url)
 			if not parameters is None and (method == 'GET' or method == 'DELETE'):
-				parameters = sorted(parameters.items())
 				oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url,parameters=parameters)
 			else:
 				oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url)
