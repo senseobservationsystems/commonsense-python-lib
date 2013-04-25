@@ -75,7 +75,7 @@ Test_GroupSensorsFind           = True
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-api.setServer('rc')
+#api.setServer('live') #options are: live (default), rc (release candidate server), dev (development server)
 
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
