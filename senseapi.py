@@ -1413,7 +1413,7 @@ class SenseAPI:
 # D A T A  P R O C E S S O R S =
 #===============================
 	def DataProcessorsGet_Parameters(self):
-		return {}
+		return {"total":0, "page":0, "per_page":1000}
 
 	def DataProcessorsGet(self, parameters):
 		"""
@@ -1430,7 +1430,7 @@ class SenseAPI:
 			return False
 
 	def DataProcessorsPost_Parameters(self):
-		return {"dataprocessor":{"command":"disp(rand);", "execution_interval":60}, "sensor":{"name":"random", "data_type":"float"}}
+		return {"dataprocessor":{"command":"", "execution_interval":60}, "sensor":{"name":"", "data_type":""}}
 	def DataProcessorsPost(self, parameters):
 		"""
 			Create a data processor in CommonSense.
@@ -1440,6 +1440,20 @@ class SenseAPI:
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
 		if self.__SenseApiCall__('/dataprocessors.json', 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
+	def DataProcessorsDelete(self, dataProcessorId):
+		"""
+			Delete a data processor in CommonSense.
+			
+			@param dataProcessorId - The id of the data processor that will be deleted.
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors/{id}.json'.format(id=dataProcessorId), 'DELETE'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
