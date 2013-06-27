@@ -150,8 +150,11 @@ class SenseAPI:
 		heads.update(headers)
 		body = ''
 		http_url = url
-		
-		if self.__authentication__ == 'not_authenticated':
+		print self.__authentication__
+		if self.__authentication__ == 'not_authenticated' and url == '/users.json' and method == 'POST':
+			heads.update({"Content-type": "application/json", "Accept":"*"})
+			body = json.dumps(parameters)
+		elif self.__authentication__ == 'not_authenticated':
 			self.__status__ = 401
 			return False
 		
@@ -163,7 +166,7 @@ class SenseAPI:
 		elif self.__authentication__ == 'authenticating_session_id':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			if not parameters is None:
-				body = json.dumps(parameters) 
+				body = json.dumps(parameters)				
 
 		elif self.__authentication__ == 'oauth':
 			oauth_url = 'http://{0}{1}'.format(self.__server_url__, url)
@@ -885,6 +888,25 @@ class SenseAPI:
 #============
 # U S E R S =
 #============
+	def CreateUser_Parameters(self):
+		return {'user':{'email':'user@example.com', 'username':'herpaderp', 'password':'098f6bcd4621d373cade4e832627b4f6', 'name':'foo', 'surname':'bar', 'mobile':'0612345678'}}
+	
+
+	def CreateUser (self, parameters):
+		"""
+			Create a user
+			This method creates a user and returns the user object and session
+			
+			@param parameters (dictionary) - Parameters according to which to create the user.		
+		"""
+		print "Creating user"
+		print parameters
+		if self.__SenseApiCall__('/users.json', 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False		
+
 	def UsersGetCurrent (self):
 		"""
 			Obtain details of current user. 
@@ -897,6 +919,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
 	def UsersDelete (self, user_id):
 		"""
 			Delete user. 
@@ -1407,6 +1430,49 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
+#================
+# D O M A I N S =
+#================
+	def DomainsGet_Parameters(self):
+		return {'details': 'full','page':0, 'per_page':100,'total':0, 'member_type':'member'}
+
+	def DomainsGet(self, parameters):
+		"""
+			This method returns the domains of the current user. 
+			The list also contains the domains to which the users has not yet been accepted.
+			
+			@param parameters (dictonary) - Dictionary containing the parameters of the request.
+									
+			@return (bool) - Boolean indicating whether DomainGet was successful.
+		"""
+		if self.__SenseApiCall__('/domains.json', 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
+	def DomainAddUserPost_Parameters(self):
+		return {'users': [{'id':'1'}]}
+		
+	def DomainAddUserPost(self, parameters, domain_id):
+		"""
+			This method adds users to the domain as a domain member. 
+			Domain managers can add users to their domain. 
+			Users who add themselfs to a domain will have the accepted status false until a manager accepts the user by adding a users via this method. 
+			Users with a token can add themselfs to the group as member and will receive the accepted status. 
+			Tokens can only be used one time for one user.
+			
+			@param parameters (dictonary) - Dictionary containing the users to add to the domain. 
+									
+			@return (bool) - Boolean indicating whether DomainAddUser was successful.
+		"""
+		if self.__SenseApiCall__('/domains/{0}/users.json'.format(domain_id), 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+			
 		
 #==================================
 # N O N  C L A S S  M E T H O D S =
