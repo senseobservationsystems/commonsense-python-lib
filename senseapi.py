@@ -150,7 +150,7 @@ class SenseAPI:
 		heads.update(headers)
 		body = ''
 		http_url = url
-		print self.__authentication__
+		
 		if self.__authentication__ == 'not_authenticated' and url == '/users.json' and method == 'POST':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			body = json.dumps(parameters)
