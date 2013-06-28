@@ -150,7 +150,7 @@ class SenseAPI:
 		heads.update(headers)
 		body = ''
 		http_url = url
-		
+		print "Doing something 1"
 		if self.__authentication__ == 'not_authenticated' and url == '/users.json' and method == 'POST':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			body = json.dumps(parameters)
@@ -170,13 +170,16 @@ class SenseAPI:
 
 		elif self.__authentication__ == 'oauth':
 			oauth_url = 'http://{0}{1}'.format(self.__server_url__, url)
-			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url)
-			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
-			heads.update(oauth_request.to_header())
+			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url, parameters=parameters)				
+			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)			
+			http_url = oauth_request.to_url()
+			#heads.update(oauth_request.to_header())
+			print oauth_request.to_header()
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
-					heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
-					http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+					pass
+					#heads.update({"Accept":"*"})
+					#http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
@@ -507,12 +510,9 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether SensorsGet was successful.
 		"""
-		if parameters is None and sensor_id == -1:
-			self.__error__ = "no arguments"
-			return False
-		
+				
 		url = ''
-		if parameters is None:
+		if parameters is None and sensor_id <> -1:
 			url = '/sensors/{0}.json'.format(sensor_id)
 		else:
 			url = '/sensors.json'
