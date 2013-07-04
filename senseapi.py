@@ -209,7 +209,6 @@ class SenseAPI:
 			self.__status__ = 418
 			return False
 
-		print heads
 
 		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth' and not self.__authentication__ == 'oauth':
 			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
