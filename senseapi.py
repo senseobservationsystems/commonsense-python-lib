@@ -1471,7 +1471,28 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
+#=============================
+# D A T A  P R O C E S S O R =
+#=============================		
+	def DataProcessorsPost_Parameters(self):
+		return {'dataprocessor':{'command':'','execution_interval':'', 'last_start_time':''},'sensor': {'name':'', 'display_name':'', 'device_type':'', 'data_type':'', 'data_structure':''}}
+		
+	def DataProcessorsPost(self, parameters):
+		"""
+			Create a Data processor  in CommonSense.
+			If DataProcessorsPost is successful, the data processor and sensor details, including its sensor_id, can be obtained by a call to getResponse(), and should be a json string.
 			
+			@param parameters (dictonary) - Dictionary containing the details of the data processor to be created. 
+					@note - http://www.sense-os.nl/46?nodeId=46&selectedId=11887			
+									
+			@return (bool) - Boolean indicating whether DataProcessorPost was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors.json', 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
 		
 #==================================
 # N O N  C L A S S  M E T H O D S =
