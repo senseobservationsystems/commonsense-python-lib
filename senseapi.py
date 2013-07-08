@@ -1474,10 +1474,27 @@ class SenseAPI:
 		
 #=============================
 # D A T A  P R O C E S S O R =
-#=============================		
+#=============================
+	def DataProcessorsGet_Parameters(self):
+		return {"total":0, "page":0, "per_page":1000}
+
+	def DataProcessorsGet(self, parameters):
+		"""
+			List the users data processors.
+
+			@param parameters (dictonary) - Dictionary containing the parameters of the request.
+									
+			@return (bool) - Boolean indicating whether this call was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors.json', 'GET', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
 	def DataProcessorsPost_Parameters(self):
 		return {'dataprocessor':{'command':'','execution_interval':'', 'last_start_time':''},'sensor': {'name':'', 'display_name':'', 'device_type':'', 'data_type':'', 'data_structure':''}}
-		
+
 	def DataProcessorsPost(self, parameters):
 		"""
 			Create a Data processor  in CommonSense.
@@ -1493,7 +1510,21 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
+	def DataProcessorsDelete(self, dataProcessorId):
+		"""
+			Delete a data processor in CommonSense.
+			
+			@param dataProcessorId - The id of the data processor that will be deleted.
+									
+			@return (bool) - Boolean indicating whether GroupsPost was successful.
+		"""
+		if self.__SenseApiCall__('/dataprocessors/{id}.json'.format(id=dataProcessorId), 'DELETE'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+
 #==================================
 # N O N  C L A S S  M E T H O D S =
 #==================================

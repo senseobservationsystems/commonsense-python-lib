@@ -1,11 +1,11 @@
-""" 
+"""
 Copyright (C) [2012] Sense Observation Systems B.V.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
- 
+
 http://www.apache.org/licenses/LICENSE-2.0
- 
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,8 +20,8 @@ import string
 #####################
 # I M P O R T A N T #
 #####################
-# This test script will attempt to open a file to read 
-# credentials with which it will authenticate at 
+# This test script will attempt to open a file to read
+# credentials with which it will authenticate at
 # CommonSense. Make sure this file is present!
 try:
     f = open('credentials.txt', 'r')
@@ -34,11 +34,11 @@ print creds
 try:
     username = creds['username']
     password = creds['password']
-except: 
+except:
     print 'session_id authentication not available!'
     username = ''
     password = ''
-    
+
 try:
     oauth_token_key         = str(creds['oauth_token_key'])
     oauth_token_secret      = str(creds['oauth_token_secret'])
@@ -80,18 +80,18 @@ api.setVerbosity(True)
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
         login()
-        
+
     if Test_SensorsGet:
         sensors = get_all_sensors()
-        
-        
+
+
     if Test_SensorPost:
         sensor_id = create_sensor()
-        
+
     if Test_ServicesPost:
         service_id = create_service(sensor_id)
         set_service_expression(service_id, sensor_id, "test_sensor")
-        
+
     if Test_SensorDataPost:
         create_sensor_data(sensor_id)
 
@@ -99,47 +99,47 @@ def run_tests ():
         if len(sensors) > 0:
             get_sensor_data(sensors[0]['id'], 1359385890, 1359472290)
         else:
-	    print "No sensors to test SensorDataGet"
-        
+            print "No sensors to test SensorDataGet"
+
     if Test_SensorAddToDevice:
         device_id = add_sensor_to_device(sensor_id)
-        
-    if Test_GroupsPost:    
+
+    if Test_GroupsPost:
         group_id = create_group()
-        
+
     if Test_GroupsSensorsPost:
         share_sensor_with_group(group_id, sensor_id)
-        
+
     if Test_SensorMetatagsPost:
         create_metatags(sensor_id)
-        
+
     if Test_SensorMetatagsGet:
         get_sensors_metatags()
-        
+
     if Test_SensorsFind:
         find_sensors()
-        
+
     if Test_GroupSensorsMetatagsGet:
         get_group_sensors_metatags(group_id)
-        
+
     if Test_GroupSensorsFind:
         find_group_sensors(group_id)
-        
+
     if Test_GroupsSensorsPost:
         unshare_sensor_with_group(group_id, sensor_id)
-    
+
     if Test_GroupsPost:
         delete_group(group_id)
-        
+
     if Test_ServicesPost:
         delete_service(sensor_id, service_id)
-        
+
     if Test_SensorPost:
         delete_sensor(sensor_id)
-        
+
     if AUTHENTICATE_SESSIONID:
         logout()
-    
+
 def printFunctionStart (function_name):
     print " "
     print "#####################################"
@@ -149,7 +149,7 @@ def printFunctionEnd ():
     print "#####################################"
     print " "
 
-    
+
 # login
 def login():
     printFunctionStart("Test Logging In")
@@ -189,21 +189,21 @@ def get_all_sensors():
     printFunctionEnd()
     return sensors
 
-    
-# get sensor data 
-def get_sensor_data (sensor_id, start_date, end_date): 
-    printFunctionStart("Test Get Sensor Data")   
+
+# get sensor data
+def get_sensor_data (sensor_id, start_date, end_date):
+    printFunctionStart("Test Get Sensor Data")
     if api.SensorDataGet(sensor_id, {'start_date':start_date, 'end_date':end_date}):
         print api.getResponse()
     else:
         print api.getError()
     printFunctionEnd()
-    
+
 
 # create a sensor
 def create_sensor ():
-    printFunctionStart("Test Post Sensor")   
-    sensor_id = -1 
+    printFunctionStart("Test Post Sensor")
+    sensor_id = -1
     if api.SensorsPost({'sensor':{'name':'test_sensor', 'device_type':'gyrocopter', 'data_type':'float'}}):
         print api.getResponse()
         sensor_id = api.getLocationId()
@@ -223,7 +223,7 @@ def delete_sensor(sensor_id):
     printFunctionEnd()
 
 # create sensor data
-def create_sensor_data (sensor_id):    
+def create_sensor_data (sensor_id):
     printFunctionStart("Test SensorDataPost")
     data = {'data':[{'value':10, 'date':1343055000},{'value':11, 'date':1343055001}]}
     if api.SensorDataPost(sensor_id, data):
@@ -246,7 +246,7 @@ def create_service (sensor_id):
     printFunctionEnd()
     return service_id
 
-    
+
 # setup a service expression
 def set_service_expression (service_id, sensor_id, sensor_name):
     printFunctionStart("Test ServicesSetExpression")
@@ -256,8 +256,8 @@ def set_service_expression (service_id, sensor_id, sensor_name):
     else:
         print api.getError()
     printFunctionEnd()
-    
-    
+
+
 # delete a service
 def delete_service(sensor_id, service_id):
     printFunctionStart("Test ServicesDelete")
@@ -266,8 +266,8 @@ def delete_service(sensor_id, service_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
-    
+
+
 # add a sensor to a device
 def add_sensor_to_device (sensor_id):
     printFunctionStart("Test SensorAddToDevice")
@@ -294,8 +294,8 @@ def create_trigger ():
         print api.getError()
     printFunctionEnd()
     return trigger_id
-    
-    
+
+
 # attach trigger to sensor
 def attach_trigger_to_sensor(sensor_id, trigger_id):
     printFunctionStart("Test SensorsTriggersPost")
@@ -310,8 +310,8 @@ def attach_trigger_to_sensor(sensor_id, trigger_id):
 # create a notification
 def create_notification ():
     printFunctionStart("Test NotificationsPost")
-    notification_id = -1    
-    parameters = {'notification':{'type':'email', 'text':'inactivity!', 'destination':'jondar@blackmagic.com'}} 
+    notification_id = -1
+    parameters = {'notification':{'type':'email', 'text':'inactivity!', 'destination':'jondar@blackmagic.com'}}
     if api.NotificationsPost(parameters):
         print api.getResponse()
         notification_id = api.getLocationId()
@@ -340,7 +340,7 @@ def get_triggers():
     else:
         print api.getError()
     printFunctionEnd()
-    
+
 
 # create an event
 def create_event (notification_id):
@@ -351,7 +351,7 @@ def create_event (notification_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
+
 
 # create a group
 def create_group():
@@ -368,8 +368,8 @@ def create_group():
         print api.getError()
     printFunctionEnd()
     return group_id
-        
-        
+
+
 # delete a group
 def delete_group(group_id):
     printFunctionStart("Test GroupsDelete")
@@ -378,8 +378,8 @@ def delete_group(group_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
-        
+
+
 # test adding user to group
 def add_user_to_group (user_id, group_id):
     printFunctionStart("Test GroupsUsersPost")
@@ -401,7 +401,7 @@ def get_group_users (group_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
+
 
 # test sharing a sensor with a group
 def share_sensor_with_group (group_id, sensor_id):
@@ -431,8 +431,8 @@ def create_metatags (sensor_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
-    
+
+
 # test retrieving metatags
 def get_sensors_metatags ():
     printFunctionStart("Test retrieving sensors with metatags")
@@ -449,9 +449,9 @@ def get_sensors_metatags ():
             print api.getError()
             break
     printFunctionEnd()
-    return sensors    
-    
-    
+    return sensors
+
+
 # test finding sensors by metatags
 def find_sensors ():
     printFunctionStart("Test finding sensors by metatags")
@@ -461,7 +461,7 @@ def find_sensors ():
     else:
         print api.getError()
     printFunctionEnd()
-    
+
 
 # test getting sensors with metatags in a group
 def get_group_sensors_metatags (group_id):
@@ -479,9 +479,9 @@ def get_group_sensors_metatags (group_id):
             print api.getError()
             break
     printFunctionEnd()
-    return sensors    
+    return sensors
 
-    
+
 # test finding a sensor in a group
 def find_group_sensors (group_id):
     printFunctionStart("Test GroupSensorsFind")
@@ -491,8 +491,8 @@ def find_group_sensors (group_id):
     else:
         print api.getError()
     printFunctionEnd()
-    
-    
+
+
 #def add_metatags_to_sensor(sensor_id):
 #    if api.SensorsMetatagsGet("greenhouse", {"details":"full"}):
 #        response = json.loads(api.getResponse())
@@ -502,8 +502,8 @@ def find_group_sensors (group_id):
 #            if 'metatags' in sensor:
 #                for metatag in sensor['metatags']:
 #                    print metatag, sensor['metatags'][metatag]
-        
-        
+
+
 # logout
 def logout():
     printFunctionStart("Test LogoutSessionId")
