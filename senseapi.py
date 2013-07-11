@@ -919,6 +919,21 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 		
+	def UsersUpdate (self, user_id, parameters):
+		"""
+			Update the current user.
+			
+			@param user_id (int) - id of the user to be updated
+			@param parameters (dictionary) - user object to update the user with
+			
+			@return (bool) - Boolean indicating whether UserUpdate was successful.
+		"""
+		if self.__SenseApiCall__('/users/{0}.json'.format(user_id), 'PUT', parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+	
 	def UsersDelete (self, user_id):
 		"""
 			Delete user. 
