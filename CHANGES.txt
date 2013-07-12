@@ -1,1 +1,3 @@
 v0.1.0 02-07-2013 -- Initial release
+v0.2.0 02-07-2013 -- Add data processor
+v0.3.0 02-07-2013 -- Add update user
