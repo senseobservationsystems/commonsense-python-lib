@@ -33,8 +33,8 @@ class SenseAPI:
 		self.__response__ = ""
 		self.__error__ = ""
 		self.__verbose__ = False
-		self.__server__  = 'live'
-		self.__server_url__ ='api.sense-os.nl'
+		self.__server__ = 'live'
+		self.__server_url__ = 'api.sense-os.nl'
 		self.__authentication__ = 'not_authenticated'
 		self.__oauth_consumer__ = {}
 		self.__oauth_token__ = {}
@@ -64,7 +64,7 @@ class SenseAPI:
 			@param server (string) - 'live' for live server, 'dev' for test server, 'rc' for release candidate
 			
 			@return (boolean) - Boolean indicating whether setServer succeeded
-		"""  
+		"""
 		if server == 'live':
 			self.__server__ = server
 			self.__server_url__ = 'api.sense-os.nl'
@@ -73,7 +73,7 @@ class SenseAPI:
 		elif server == 'dev':
 			self.__server__ = server
 			self.__server_url__ = 'api.dev.sense-os.nl'
-			#the dev server doesn't support https
+			# the dev server doesn't support https
 			self.setUseHTTPS(False)
 			return True
 		elif server == 'rc':
@@ -82,24 +82,24 @@ class SenseAPI:
 			self.setUseHTTPS(False)
 		else:
 			return False
-		
+
 	def setUseHTTPS(self, enable=True):
 		"""
 			Set whether to use https or http.
 			@param enable (boolean) - True to enable https (default), False to use http
 		"""
 		self.__use_https__ = enable
-		
+
 	def __setAuthenticationMethod__(self, method):
-		if not (method in ['session_id','oauth','authenticating_session_id','authenticating_oauth','not_authenticated','api_key']):
+		if not (method in ['session_id', 'oauth', 'authenticating_session_id', 'authenticating_oauth', 'not_authenticated', 'api_key']):
 			return False
 		else:
 			self.__authentication__ = method
 			return True
-		
+
 
 #=======================================
-# R E T R I E V A L  F U N C T I O N S =	
+# R E T R I E V A L  F U N C T I O N S =
 #=======================================
 	def getResponseStatus(self):
 		"""
@@ -116,7 +116,7 @@ class SenseAPI:
 			@return (dictionary) - Dictonary containing headers
 		"""
 		return self.__headers__
-	
+
 	def getResponse(self):
 		"""
 			Retrieve the response of the last api call
@@ -124,7 +124,7 @@ class SenseAPI:
 			@return (string) - The literal response body, which is likely to be in json format
 		"""
 		return self.__response__
-	
+
 	def getError(self):
 		"""
 			Retrieve the error value
@@ -141,7 +141,7 @@ class SenseAPI:
 		"""
 		location = self.__headers__.get('location')
 		return location.split('/')[-1] if location is not None else None;
-	
+
 #=======================================
 	# B A S E  A P I  C A L L  M E T H O D =
 #=======================================
@@ -150,14 +150,13 @@ class SenseAPI:
 		heads.update(headers)
 		body = ''
 		http_url = url
-		print "Doing something 1"
 		if self.__authentication__ == 'not_authenticated' and url == '/users.json' and method == 'POST':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			body = json.dumps(parameters)
 		elif self.__authentication__ == 'not_authenticated':
 			self.__status__ = 401
 			return False
-		
+
 		elif self.__authentication__ == 'authenticating_oauth':
 			heads.update({"Content-type": "application/x-www-form-urlencoded", "Accept":"*"})
 			if not parameters is None:
@@ -166,24 +165,23 @@ class SenseAPI:
 		elif self.__authentication__ == 'authenticating_session_id':
 			heads.update({"Content-type": "application/json", "Accept":"*"})
 			if not parameters is None:
-				body = json.dumps(parameters)				
+				body = json.dumps(parameters)
 
 		elif self.__authentication__ == 'oauth':
 			oauth_url = 'http://{0}{1}'.format(self.__server_url__, url)
-			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url, parameters=parameters)				
-			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)			
+			oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, token=self.__oauth_token__, http_method=method, http_url=oauth_url, parameters=parameters)
+			oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
 			http_url = oauth_request.to_url()
-			#heads.update(oauth_request.to_header())
-			print oauth_request.to_header()
+			# heads.update(oauth_request.to_header())
 			if not parameters is None:
 				if method == 'GET' or method == 'DELETE':
 					pass
-					#heads.update({"Accept":"*"})
-					#http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
+					# heads.update({"Accept":"*"})
+					# http_url = '{0}?{1}'.format(url, urllib.urlencode(parameters))
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
-			
+
 		elif self.__authentication__ == 'session_id':
 			heads.update({'X-SESSION_ID':"{0}".format(self.__session_id__)})
 			if not parameters is None:
@@ -193,7 +191,7 @@ class SenseAPI:
 				else:
 					heads.update({"Content-type": "application/json", "Accept":"*"})
 					body = json.dumps(parameters)
-					
+
 		elif self.__authentication__ == 'api_key':
 			if parameters is None:
 				parameters = {}
@@ -204,37 +202,37 @@ class SenseAPI:
 			else:
 				heads.update({"Content-type": "application/json", "Accept":"*"})
 				body = json.dumps(parameters)
-				
+
 		else:
 			self.__status__ = 418
 			return False
 
 
 		if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth' and not self.__authentication__ == 'oauth':
-			connection 	= httplib.HTTPSConnection(self.__server_url__, timeout=60)
+			connection 	 = httplib.HTTPSConnection(self.__server_url__, timeout=60)
 		else:
-			connection 	= httplib.HTTPConnection(self.__server_url__, timeout=60)
-			
+			connection 	 = httplib.HTTPConnection(self.__server_url__, timeout=60)
+
 		try:
 			connection.request(method, http_url, body, heads);
-			result = connection.getresponse(); 
-		except: # TODO: check if this doesnt already generate a status
+			result = connection.getresponse();
+		except:  # TODO: check if this doesnt already generate a status
 			self.__status__ = 408
 			return False
 
-		self.__headers__	= {}
-		
-		self.__response__ 	= result.read()
-		self.__status__	= result.status
-		resp_headers	= result.getheaders()
-		
-		connection.close()		
-		
+		self.__headers__	 = {}
+
+		self.__response__ 	 = result.read()
+		self.__status__	 = result.status
+		resp_headers	 = result.getheaders()
+
+		connection.close()
+
 		for h in resp_headers:
 			self.__headers__.update({h[0]:h[1]})
 		self.__headers__ = dict(zip(map(string.lower, self.__headers__.keys()), self.__headers__.values()))
 
-		
+
 		if self.__verbose__:
 			print "===================CALL==================="
 			print "Call: {0} {1}".format(method, http_url)
@@ -246,12 +244,12 @@ class SenseAPI:
 			print "Headers: {0}".format(self.__headers__)
 			print "Response: {0}".format(self.__response__)
 			print "==========================================\n"
-		
+
 		if self.__status__ == 200 or self.__status__ == 201 or self.__status__ == 302:
 			return True
 		else:
 			return False
-		
+
 #=============================================
 # A P I _ K E Y  A U T H E N T I C A T I O N =
 #=============================================
@@ -284,23 +282,23 @@ class SenseAPI:
 			@param password (string) - MD5Hash of CommonSense password
 			
 			@return (bool) - Boolean indicating whether AuthenticateSessionId was successful
-		""" 
+		"""
 		self.__setAuthenticationMethod__('authenticating_session_id')
-			
-		parameters = {'username':username,'password':password}
+
+		parameters = {'username':username, 'password':password}
 
 		if self.__SenseApiCall__("/login.json", "POST", parameters=parameters):
 			try:
 				response = json.loads(self.__response__)
-			except: 
+			except:
 				self.__setAuthenticationMethod__('not_authenticated')
 				self.__error__ = "notjson"
 				return False
-			try: 
+			try:
 				self.__session_id__ = response['session_id']
-				self.__setAuthenticationMethod__('session_id')		
+				self.__setAuthenticationMethod__('session_id')
 				return True
-			except: 
+			except:
 				self.__setAuthenticationMethod__('not_authenticated')
 				self.__error__ = "no session_id"
 				return False
@@ -308,7 +306,7 @@ class SenseAPI:
 			self.__setAuthenticationMethod__('not_authenticated')
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def LogoutSessionId(self):
 		"""
 			Logout the current session_id from CommonSense
@@ -321,22 +319,22 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	# deprecated
 	def Login (self, username, password):
 		"""
 			Deprecated, use AuthenticateSessionId instead
 		"""
 		return self.AuthenticateSessionId(username, password)
-		
-	#deprecated
+
+	# deprecated
 	def Logout (self):
 		"""
 			Deprecated, use LogoutSessionId instead
 		"""
 		return self.LogoutSessionId()
-	
-	
+
+
 #=========================================
 # O A U T H  A U T H E N T I C A T I O N =
 #=========================================
@@ -352,14 +350,14 @@ class SenseAPI:
 			@return (boolean) - Boolean indicating whether the provided credentials were successfully authenticated
 		"""
 		self.__oauth_consumer__ = oauth.OAuthConsumer(str(oauth_consumer_key), str(oauth_consumer_secret))
-		self.__oauth_token__ 	= oauth.OAuthToken(str(oauth_token_key), str(oauth_token_secret))
+		self.__oauth_token__ 	 = oauth.OAuthToken(str(oauth_token_key), str(oauth_token_secret))
 		self.__authentication__ = 'oauth'
 		if self.__SenseApiCall__('/users/current.json', 'GET'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #=======================================
 # O A U T H  A U T H O R I Z A T I O N =
 #=======================================
@@ -377,7 +375,7 @@ class SenseAPI:
 			@param token_secret (string) - A valid oauth token secret obtained from CommonSense
 			@param token_verifier (string) - A valid oauth token verifier obtained from CommonSense
 		"""
-		
+
 		self.__oauth_token__ = oauth.OAuthToken(str(token_key), str(token_secret))
 		if not token_verifier == None:
 			self.__oauth_token__.set_verifier(str(token_verifier))
@@ -394,14 +392,14 @@ class SenseAPI:
 			@return (boolean) - Boolean indicating whether OauthGetRequestToken was successful
 		"""
 		self.__setAuthenticationMethod__('authenticating_oauth')
-		
+
 	# obtain a request token
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
-																	http_method = 'GET',\
-																 	callback=oauth_callback,\
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, \
+																	http_method='GET', \
+																 	callback=oauth_callback, \
 																 	http_url='http://api.sense-os.nl/oauth/request_token')
-		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)		
-		
+		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, None)
+
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
 			parameters.append((key, oauth_request.parameters[key]))
@@ -423,22 +421,22 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether OauthGetRequestToken was successful
 		"""
-		
+
 		self.__setAuthenticationMethod__('authenticating_oauth')
 
 		# obtain access token
-		oauth_request = oauth.OAuthRequest.from_consumer_and_token(	self.__oauth_consumer__,\
-																 	token=self.__oauth_token__,\
-																 	callback='',\
-																 	verifier=self.__oauth_token__.verifier,\
+		oauth_request = oauth.OAuthRequest.from_consumer_and_token(self.__oauth_consumer__, \
+																 	token=self.__oauth_token__, \
+																 	callback='', \
+																 	verifier=self.__oauth_token__.verifier, \
 																 	http_url='http://api.sense-os.nl/oauth/access_token')
 		oauth_request.sign_request(oauth.OAuthSignatureMethod_HMAC_SHA1(), self.__oauth_consumer__, self.__oauth_token__)
-		
+
 		parameters = []
 		for key in oauth_request.parameters.iterkeys():
 			parameters.append((key, oauth_request.parameters[key]))
 		parameters.sort()
-		
+
 		if self.__SenseApiCall__('/oauth/access_token', 'GET', parameters=parameters):
 			response = urlparse.parse_qs(self.__response__)
 			self.__oauth_token__ = oauth.OAuthToken(response['oauth_token'][0], response['oauth_token_secret'][0])
@@ -448,7 +446,7 @@ class SenseAPI:
 			self.__setAuthenticationMethod__('session_id')
 			self.__error__ = "error getting access token"
 			return False
-	
+
 	def OauthAuthorizeApplication(self, oauth_duration='hour'):
 		"""
 			Authorize an application using oauth. If this function returns True, the obtained oauth token can be retrieved using getResponse and will be in url-parameters format.
@@ -461,10 +459,10 @@ class SenseAPI:
 		if self.__session_id__ == '':
 			self.__error__ = "not logged in"
 			return False
-		
+
 	# automatically get authorization for the application
-		parameters 	= {'oauth_token':self.__oauth_token__.key, 'tok_expir':self.__OauthGetTokExpir__(oauth_duration), 'action':'ALLOW', 'session_id':self.__session_id__}
-		
+		parameters 	 = {'oauth_token':self.__oauth_token__.key, 'tok_expir':self.__OauthGetTokExpir__(oauth_duration), 'action':'ALLOW', 'session_id':self.__session_id__}
+
 		if self.__SenseApiCall__('/oauth/provider_authorize', 'POST', parameters=parameters):
 			if self.__status__ == 302:
 				response = urlparse.parse_qs(urlparse.urlparse(self.__headers__['location'])[4])
@@ -479,7 +477,7 @@ class SenseAPI:
 			self.__setAuthenticationMethod__('session_id')
 			self.__error__ = "error authorizing application"
 			return False
-		
+
 	def __OauthGetTokExpir__ (self, duration):
 		if duration == 'hour':
 			return 1
@@ -490,15 +488,15 @@ class SenseAPI:
 		if duration == 'month':
 			return 4
 		if duration == 'forever':
-			return 0		
+			return 0
 
 #================
 # S E N S O R S =
 #================
 	def SensorsGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'shared':0, 'owned':0, 'physical':0, 'details':'full'}
-		
-	def SensorsGet(self, parameters=None, sensor_id=-1):
+
+	def SensorsGet(self, parameters=None, sensor_id= -1):
 		"""
 			Retrieve sensors from CommonSense, according to parameters, or by sensor id. 
 			If successful, result can be obtained by a call to getResponse(), and should be a json string.
@@ -509,19 +507,19 @@ class SenseAPI:
 			
 			@return (boolean) - Boolean indicating whether SensorsGet was successful.
 		"""
-				
+
 		url = ''
 		if parameters is None and sensor_id <> -1:
 			url = '/sensors/{0}.json'.format(sensor_id)
 		else:
 			url = '/sensors.json'
-			
+
 		if self.__SenseApiCall__(url, 'GET', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+
 	def SensorsDelete(self, sensor_id):
 		"""
 			Delete a sensor from CommonSense.
@@ -535,10 +533,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+
 	def SensorsPost_Parameters(self):
 		return {'sensor': {'name':'', 'display_name':'', 'device_type':'', 'pager_type':'', 'data_type':'', 'data_structure':''}}
-		
+
 	def SensorsPost(self, parameters):
 		"""
 			Create a sensor in CommonSense.
@@ -568,7 +566,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unscuccessful"
 			return False
-		
+
 #==================
 # M E T A T A G S =
 #==================
@@ -583,7 +581,7 @@ class SenseAPI:
 		"""
 		ns = "default" if namespace is None else namespace
 		parameters['namespace'] = ns
-		if self.__SenseApiCall__('/sensors/metatags.json','GET', parameters=parameters):
+		if self.__SenseApiCall__('/sensors/metatags.json', 'GET', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -622,7 +620,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def SensorMetatagsPost(self, sensor_id, metatags, namespace=None):
 		"""
 			Attach metatags to a sensor for a specific namespace
@@ -654,9 +652,9 @@ class SenseAPI:
 		if self.__SenseApiCall__("/sensors/{0}/metatags.json?namespace={1}".format(sensor_id, ns), "POST", parameters=metatags):
 			return True
 		else:
-			self.__error__ ="api call unsuccessful"
+			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def SensorMetatagsDelete(self, sensor_id, namespace=None):
 		"""
 			Delete the metatags attached to a sensor for a specific namespace
@@ -672,7 +670,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def SensorsFind(self, parameters, filters, namespace=None):
 		"""
 			Find sensors based on a number of filters on metatags in a specific namespace
@@ -690,7 +688,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-	
+
 	def GroupSensorsFind(self, group_id, parameters, filters, namespace=None):
 		"""
 			Find sensors in a group based on a number of filters on metatags
@@ -725,13 +723,13 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #=======================
 # S E N S O R  D A T A =
 #=======================
 	def SensorDataGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'start_date':0, 'end_date':4294967296, 'date':0, 'next':0, 'last':0, 'sort':'ASC', 'total':1}
-		
+
 	def SensorDataGet(self, sensor_id, parameters):
 		"""
 			Retrieve sensor data for a specific sensor from CommonSense.
@@ -745,10 +743,10 @@ class SenseAPI:
 		"""
 		if self.__SenseApiCall__('/sensors/{0}/data.json'.format(sensor_id), 'GET', parameters=parameters):
 			return True
-		else:	
+		else:
 			self.__error__ = "api call unsuccessful"
-			return False 
-	
+			return False
+
 	def SensorDataPost(self, sensor_id, parameters):
 		"""
 			Post sensor data to a specific sensor in CommonSense.
@@ -761,6 +759,21 @@ class SenseAPI:
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
+			return False
+
+	def SensorDataDelete(self, sensor_id, data_id):
+		"""
+			Delete a sensor datum from a specific sensor in CommonSense.
+			
+			@param sensor_id (int) - Sensor id of the sensor to delete data from
+			@param data_id (int) - Id of the data point to delete
+			
+			@return (bool) - Boolean indicating whether SensorDataDelete was successful. 
+		"""
+		if self.__SenseApiCall__('/sensor/{0}/data/{1}.json'.format(sensor_id, data_id), 'DELETE'):
+			return True
+		else:
+			self.__error_ = "api call unsuccessful"
 			return False
 
 	def SensorsDataPost(self, parameters):
@@ -815,7 +828,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def ServicesDelete (self, sensor_id, service_id):
 		"""
 			Delete a service from CommonSense.
@@ -830,7 +843,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def ServicesGetExpression(self, sensor_id, service_id):
 		"""
 			Get expression for the math service.
@@ -845,10 +858,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def ServicesSet_Parameters (self):
 			return {'parameters':[]}
-		
+
 	def ServicesSetExpression (self, sensor_id, service_id, parameters):
 		"""
 			Set expression for the math service.
@@ -882,14 +895,14 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-			
+
 
 #============
 # U S E R S =
 #============
 	def CreateUser_Parameters(self):
 		return {'user':{'email':'user@example.com', 'username':'herpaderp', 'password':'098f6bcd4621d373cade4e832627b4f6', 'name':'foo', 'surname':'bar', 'mobile':'0612345678'}}
-	
+
 
 	def CreateUser (self, parameters):
 		"""
@@ -904,7 +917,7 @@ class SenseAPI:
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
-			return False		
+			return False
 
 	def UsersGetCurrent (self):
 		"""
@@ -918,7 +931,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def UsersUpdate (self, user_id, parameters):
 		"""
 			Update the current user.
@@ -933,7 +946,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-	
+
 	def UsersDelete (self, user_id):
 		"""
 			Delete user. 
@@ -945,11 +958,11 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #==============
 # E V E N T S =
 #==============
-	def EventsNotificationsGet(self, event_notification_id = -1):
+	def EventsNotificationsGet(self, event_notification_id= -1):
 		"""
 			Retrieve either all notifications or the notifications attached to a specific event.
 			If successful, result can be obtained by a call to getResponse(), and should be a json string.
@@ -962,7 +975,7 @@ class SenseAPI:
 			url = '/events/notifications.json'
 		else:
 			url = '/events/notifications/{0}.json'.format(event_notification_id)
-			
+
 		if self.__SenseApiCall__(url, 'GET'):
 			return True
 		else:
@@ -985,7 +998,7 @@ class SenseAPI:
 
 	def EventsNotificationsPost_Parameters(self):
 		return {'event_notification':{'name':'my_event', 'event':'add_sensor', 'notification_id':0, 'priority':0}}
-	
+
 	def EventsNotificationsPost(self, parameters):
 		"""
 			Create an event-notification in CommonSense.
@@ -995,7 +1008,7 @@ class SenseAPI:
 					@note - 
 					
 			@return (bool) - Boolean indicating whether EventsNotificationsPost was successful. 
-		""" 
+		"""
 		if self.__SenseApiCall__('/events/notifications.json', 'POST', parameters=parameters):
 			return True
 		else:
@@ -1005,7 +1018,7 @@ class SenseAPI:
 #==================
 # T R I G G E R S =
 #==================
-	def TriggersGet(self, trigger_id=-1):
+	def TriggersGet(self, trigger_id= -1):
 		"""
 			Retrieve either all triggers or the details of a specific trigger.
 			If successful, result can be obtained by a call to getResponse(), and should be a json string.
@@ -1031,7 +1044,7 @@ class SenseAPI:
 			@param trigger_id (int) - Trigger id of the trigger to delete.
 			
 			@return (bool) - Boolean indicating whether TriggersDelete was successful.
-		""" 
+		"""
 		if self.__SenseApiCall__('/triggers/{0}'.format(trigger_id), 'DELETE'):
 			return True
 		else:
@@ -1060,7 +1073,7 @@ class SenseAPI:
 #=================================
 # S E N S O R S  T R I G G E R S =
 #=================================
-	def SensorsTriggersGet(self, sensor_id, trigger_id=-1):
+	def SensorsTriggersGet(self, sensor_id, trigger_id= -1):
 		"""
 			Obtain either all triggers connected to a sensor, or the details of a specific trigger connected to a sensor.
 			If successful, result can be obtained from getResponse(), and should be a json string.
@@ -1074,13 +1087,13 @@ class SenseAPI:
 			url = '/sensors/{0}/triggers.json'.format(sensor_id)
 		else:
 			url = '/sensors/{0}/triggers/{1}.json'.format(sensor_id, trigger_id)
-			
+
 		if self.__SenseApiCall__(url, 'GET'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-	
+
 	def SensorsTriggersDelete(self, sensor_id, trigger_id):
 		"""
 			Disconnect a trigger from a sensor in CommonSense
@@ -1095,10 +1108,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def SensorsTriggersPost_Parameters(self):
 		return {'trigger':{'id':0}}
-		
+
 	def SensorsTriggersPost(self, sensor_id, parameters):
 		"""
 			Connect a trigger to a sensor in CommonSense.
@@ -1115,7 +1128,7 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 
-#TODO: SensorsTriggerPut
+# TODO: SensorsTriggerPut
 
 #============================================================
 # S E N S O R S  T R I G G E R S  N O T I F I C A T I O N S =
@@ -1151,10 +1164,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-	
+
 	def SensorsTriggersNotificationsPost_Parameters(self):
 		return {'notification':{'id':0}}
-		
+
 	def SensorsTriggersNotificationsPost(self, sensor_id, trigger_id, parameters):
 		"""
 			Connect a notification to a sensor-trigger combination.
@@ -1171,11 +1184,11 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #============================
 # N O T I F I C A T I O N S =
 #============================
-	def NotificationsGet(self, notification_id=-1):
+	def NotificationsGet(self, notification_id= -1):
 		"""
 			Obtain either all notifications from CommonSense, or the details of a specific notification.
 			If successful, the result can be obtained from getResponse(), and should be a json string.
@@ -1188,7 +1201,7 @@ class SenseAPI:
 			url = '/notifications.json'
 		else:
 			url = '/notifications/{0}.json'.format(notification_id)
-			
+
 		if self.__SenseApiCall__(url, 'GET'):
 			return True
 		else:
@@ -1211,7 +1224,7 @@ class SenseAPI:
 
 	def NotificationsPost_Parameters(self):
 		return {'notification':{'type':'url, email', 'text':'herpaderp', 'destination':'http://api.sense-os.nl/scripts'}}
-	
+
 	def NotificationsPost(self, parameters):
 		"""
 			Create a notification on CommonSense.
@@ -1249,14 +1262,14 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #==============
 # G R O U P S =
 #==============
 	def GroupsGet_Parameters(self):
 		return {'page':0, 'per_page':100, 'total':0, 'public':0 }
-		
-	def GroupsGet(self, parameters=None, group_id=-1):
+
+	def GroupsGet(self, parameters=None, group_id= -1):
 		"""
 			Retrieve groups from CommonSense, according to parameters, or by group id. 
 			If successful, result can be obtained by a call to getResponse(), and should be a json string.
@@ -1269,19 +1282,19 @@ class SenseAPI:
 		if parameters is None and group_id == -1:
 			self.__error__ = "no arguments"
 			return False
-		
+
 		url = ''
 		if group_id is -1:
 			url = '/groups.json'
 		else:
 			url = '/groups/{0}.json'.format(group_id)
-			
+
 		if self.__SenseApiCall__(url, 'GET', parameters=parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+
 	def GroupsDelete(self, group_id):
 		"""
 			Delete a group from CommonSense.
@@ -1295,10 +1308,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-				
+
 	def GroupsPost_Parameters(self):
 		return {'group': {'name':''}}
-		
+
 	def GroupsPost(self, parameters):
 		"""
 			Create a group in CommonSense.
@@ -1313,10 +1326,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def GroupsPut_Parameters(self):
 		return self.GroupsPost_Parameters()
-	
+
 	def GroupsPut(self, parameters, group_id):
 		"""
 			Update a group in CommonSense.
@@ -1354,7 +1367,7 @@ class SenseAPI:
 			return False
 
 	def GroupsUsersPost_Parameters(self):
-		return {"users":[{"user":{"id":"","username":""}}]}
+		return {"users":[{"user":{"id":"", "username":""}}]}
 
 	def GroupsUsersPost(self, parameters, group_id):
 		"""
@@ -1376,7 +1389,7 @@ class SenseAPI:
 			
 			@return (bool) - Boolean indicating whether GroupsPost was successful.
 		"""
-		if self.__SenseApiCall__('/groups/{group_id}/users/{user_id}.json'.format(group_id=group_id,user_id=user_id), 'DELETE'):
+		if self.__SenseApiCall__('/groups/{group_id}/users/{user_id}.json'.format(group_id=group_id, user_id=user_id), 'DELETE'):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
@@ -1396,7 +1409,7 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 
-		
+
 #================================
 # G R O U P S  &  S E N S O R S =
 #================================
@@ -1412,9 +1425,9 @@ class SenseAPI:
 		if self.__SenseApiCall__("/groups/{0}/sensors.json".format(group_id), "POST", parameters=sensors):
 			return True
 		else:
-			self.__error__ = "api call unsuccessful"		
+			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def GroupsSensorsGet(self, group_id, parameters):
 		"""
 			Retrieve sensors shared within the group.
@@ -1429,7 +1442,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def GroupsSensorsDelete(self, group_id, sensor_id):
 		"""
 			Stop sharing a sensor within a group
@@ -1444,12 +1457,12 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #================
 # D O M A I N S =
 #================
 	def DomainsGet_Parameters(self):
-		return {'details': 'full','page':0, 'per_page':100,'total':0, 'member_type':'member'}
+		return {'details': 'full', 'page':0, 'per_page':100, 'total':0, 'member_type':'member'}
 
 	def DomainsGet(self, parameters):
 		"""
@@ -1465,10 +1478,10 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 	def DomainAddUserPost_Parameters(self):
 		return {'users': [{'id':'1'}]}
-		
+
 	def DomainAddUserPost(self, parameters, domain_id):
 		"""
 			This method adds users to the domain as a domain member. 
@@ -1486,7 +1499,7 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
-		
+
 #=============================
 # D A T A  P R O C E S S O R =
 #=============================
@@ -1508,7 +1521,7 @@ class SenseAPI:
 			return False
 
 	def DataProcessorsPost_Parameters(self):
-		return {'dataprocessor':{'command':'','execution_interval':'', 'last_start_time':''},'sensor': {'name':'', 'display_name':'', 'device_type':'', 'data_type':'', 'data_structure':''}}
+		return {'dataprocessor':{'command':'', 'execution_interval':'', 'last_start_time':''}, 'sensor': {'name':'', 'display_name':'', 'device_type':'', 'data_type':'', 'data_structure':''}}
 
 	def DataProcessorsPost(self, parameters):
 		"""
@@ -1556,4 +1569,4 @@ def MD5Hash(password):
 	return password_md5
 
 
-	
+
