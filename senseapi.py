@@ -878,6 +878,41 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
+	def ServicesSetMetod (self, sensor_id, service_id, method, parameters):
+		"""
+			Set expression for the math service.
+			
+			@param sensor_id (int) - Sensor id of the sensor the service is connected to.
+			@param service_id (int) - Service id of the service for which to set the expression.
+			@param method (string) - The set method name.
+			@param parameters (dictonary) - Parameters to set the expression of the math service.
+									
+			@return (bool) - Boolean indicating whether ServicesSetMethod was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/{2}.json'.format(sensor_id, service_id, method), 'POST', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False	
+	
+	def ServicesGetMetod (self, sensor_id, service_id, method):
+		"""
+			Set expression for the math service.
+			
+			@param sensor_id (int) - Sensor id of the sensor the service is connected to.
+			@param service_id (int) - Service id of the service for which to set the expression.
+			@param method (string) - The get method name.
+					
+			@return (bool) - Boolean indicating whether ServicesSetExpression was successful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/services/{1}/{2}.json'.format(sensor_id, service_id, method), 'GET'):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False	
+		
+	
 
 	def ServicesSetUseDataTimestamp(self, sensor_id, service_id, parameters):
 		"""
