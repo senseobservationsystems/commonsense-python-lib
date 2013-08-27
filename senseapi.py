@@ -1104,6 +1104,22 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
+	def TriggersPut(self, trigger_id, parameters):
+		"""
+			Update a trigger on CommonSense.
+			If TriggersPut was successful the result, including the trigger_id, can be obtained from getResponse().
+			
+			@param parameters (dictionary) - Parameters of the trigger to update.
+					@note 
+					
+			@return (bool) - Boolean indicating whether TriggersPut was successful.
+		"""
+		if self.__SenseApiCall__('/triggers/{trigger_id}.json'.format(trigger_id=trigger_id), 'PUT', parameters=parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
 
 #=================================
 # S E N S O R S  T R I G G E R S =
