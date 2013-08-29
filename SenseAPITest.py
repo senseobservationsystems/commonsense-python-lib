@@ -58,6 +58,7 @@ AUTHENTICATE_OAUTH              = False
 
 Test_SensorsGet                 = True
 Test_SensorDataGet              = True
+Test_SensorsDataGet             = True
 Test_SensorPost                 = True
 Test_SensorDataPost             = True
 Test_ServicesPost               = True
@@ -75,7 +76,7 @@ Test_GroupSensorsFind           = True
 
 api = senseapi.SenseAPI()
 api.setVerbosity(True)
-#api.setServer('live') #options are: live (default), rc (release candidate server), dev (development server)
+api.setServer('live') #options are: live (default), rc (release candidate server), dev (development server)
 
 def run_tests ():
     if AUTHENTICATE_SESSIONID:
@@ -100,6 +101,14 @@ def run_tests ():
             get_sensor_data(sensors[0]['id'], 1359385890, 1359472290)
         else:
             print "No sensors to test SensorDataGet"
+
+    if Test_SensorsDataGet:
+        if len(sensors) > 1:
+            ids = [sensors[0]['id'], sensors[1]['id']]
+	    get_sensors_data(ids, 1359385890, 1359472290)
+        else:
+	    print "No sensors to test SensorsDataGet"
+        
 
     if Test_SensorAddToDevice:
         device_id = add_sensor_to_device(sensor_id)
@@ -199,6 +208,15 @@ def get_sensor_data (sensor_id, start_date, end_date):
         print api.getError()
     printFunctionEnd()
 
+# get sensor data 
+def get_sensors_data (sensor_id, start_date, end_date): 
+    printFunctionStart("Test Get Sensors Data")   
+    if api.SensorsDataGet(sensor_id, {'start_date':start_date, 'end_date':end_date}):
+        print api.getResponse()
+    else:
+        print api.getError()
+    printFunctionEnd()
+    
 
 # create a sensor
 def create_sensor ():
