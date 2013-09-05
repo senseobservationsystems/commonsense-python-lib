@@ -1186,6 +1186,23 @@ class SenseAPI:
 			self.__error__ = "api call unsuccessful"
 			return False
 		
+	def SensorsTriggersPut(self, sensor_id, trigger_id, parameters):
+		"""
+			Update a trigger of a sensor in CommonSense.
+			
+			@param sensor_id (int) - Sensor id of the sensor to connect a trigger to.
+			@param trigger_id (int) - Trigger id of the trigger connected to the sensor.
+			@param parameters (dictionary) - Dictionary containing the details of the trigger.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether SensorsTriggersPost was successeful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}'.format(sensor_id, trigger_id), 'PUT', parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
+		
 	def SensorsTriggersToggleActive_Parameters(self):
 		return {'active':1}
 	
