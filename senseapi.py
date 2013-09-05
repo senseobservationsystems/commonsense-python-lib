@@ -1197,7 +1197,7 @@ class SenseAPI:
 					
 			@return (bool) - Boolean indicating whether SensorsTriggersPost was successeful.
 		"""
-		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}'.format(sensor_id, trigger_id), 'PUT', parameters):
+		if self.__SenseApiCall__('/sensors/{0}/trigger/{1}.json'.format(sensor_id, trigger_id), 'PUT', parameters):
 			return True
 		else:
 			self.__error__ = "api call unsuccessful"
