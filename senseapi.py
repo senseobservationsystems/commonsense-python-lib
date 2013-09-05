@@ -1185,6 +1185,26 @@ class SenseAPI:
 		else:
 			self.__error__ = "api call unsuccessful"
 			return False
+		
+	def SensorsTriggersToggleActive_Parameters(self):
+		return {'active':1}
+	
+	def SensorsTriggersToggleActive(self, sensor_id, trigger_id, parameters):
+		"""
+			Enable a sensor trigger
+			
+			@param sensor_id (int) - Sensor id of the sensor connected to the trigger.
+			@param trigger_id (int) - Trigger id of the trigger connected to the sensor.
+			@param parameters (dictionary) - Dictionary containing the details for toggeling the activation.
+					@note - 
+					
+			@return (bool) - Boolean indicating whether SensorsTriggersEnable was successeful.
+		"""
+		if self.__SenseApiCall__('/sensors/{0}/triggers/{1}/active'.format(sensor_id, trigger_id), 'POST', parameters):
+			return True
+		else:
+			self.__error__ = "api call unsuccessful"
+			return False
 
 # TODO: SensorsTriggerPut
 
