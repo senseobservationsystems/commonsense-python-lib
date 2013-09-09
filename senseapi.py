@@ -793,7 +793,7 @@ class SenseAPI:
 			
 			@return (bool) - Boolean indicating whether SensorDataDelete was successful. 
 		"""
-		if self.__SenseApiCall__('/sensor/{0}/data/{1}.json'.format(sensor_id, data_id), 'DELETE'):
+		if self.__SenseApiCall__('/sensors/{0}/data/{1}.json'.format(sensor_id, data_id), 'DELETE'):
 			return True
 		else:
 			self.__error_ = "api call unsuccessful"
