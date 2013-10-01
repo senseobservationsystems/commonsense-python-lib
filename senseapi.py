@@ -142,6 +142,54 @@ class SenseAPI:
         location = self.__headers__.get('location')
         return location.split('/')[-1] if location is not None else None;
 
+    def getAllSensors(self):
+        """
+            Retrieve all the user's own sensors by iterating over the SensorsGet function
+            
+            @return (list) - Array of sensors
+        """
+        j = 0
+        sensors = []
+        parameters = {'page':0, 'per_page':1000, 'owned':1}
+        while True:
+            parameters['page'] = j
+            if self.SensorsGet(parameters):
+                s = json.loads(self.getResponse())['sensors']
+                sensors.extend(s)
+            else:
+                # if any of the calls fails, we cannot be cannot be sure about the sensors in CommonSense
+                return None
+    
+            if len(s) < 1000:
+                break
+    
+            j += 1
+    
+        return sensors
+
+
+    def findSensor(self, sensors, sensor_name, device_type = None):
+        """
+            Find a sensor in the provided list of sensors
+            
+            @param sensors (list) - List of sensors to search in
+            @param sensor_name (string) - Name of sensor to find
+            @param device_type (string) - Device type of sensor to find, can be None
+            
+            @return (string) - sensor_id of sensor or None if not found
+        """
+
+        if device_type == None: 
+            for sensor in sensors:
+                if sensor['name'] == sensor_name:
+                    return sensor['id']
+        else:
+            for sensor in sensors:
+                if sensor['name'] == sensor_name and sensor['device_type'] == device_type:
+                    return sensor['id']
+
+        return None
+
 #=======================================
     # B A S E  A P I  C A L L  M E T H O D =
 #=======================================
