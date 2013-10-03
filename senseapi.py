@@ -1025,6 +1025,13 @@ class SenseAPI:
             self.__error__ = "api call unsuccessful"
             return False
 
+    def CreateUserNoEmail (self, parameters):
+        if self.__SenseApiCall__('/users.json?disable_mail=1', 'POST', parameters = parameters):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
     def UsersGetCurrent (self):
         """
             Obtain details of current user. 
@@ -1628,6 +1635,24 @@ class SenseAPI:
             self.__error__ = "api call unsuccessful"
             return False
 
+    def DomainUsersGet_Parameters(self):
+        return {'page':0, 'per_page':100, 'sort':'ASC', 'sort_field':''}
+
+    def DomainUsersGet(self, domain_id, parameters):
+        """
+            Retrieve users of the specified domain.
+            
+            @param domain_id (int) - Id of the domain to retrieve users from
+            @param parameters (int) - parameters of the api call.
+            
+            @return (bool) - Boolean idicating whether DomainUsersGet was successful.
+        """
+        if self.__SenseApiCall__('/domains/{0}/users.json'.format(domain_id), 'GET', parameters = parameters):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+    
     def DomainAddUserPost_Parameters(self):
         return {'users': [{'id':'1'}]}
 

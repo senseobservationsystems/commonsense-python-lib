@@ -1,6 +1,6 @@
 from setuptools import setup
 setup(name='senseapi',
-      version = '0.5.6',
+      version = '0.5.8',
       packages = [''],
       install_requires = ['oauth>=1.0.1'],
       author = "Sense Observation Systems",
