@@ -159,12 +159,12 @@ class SenseAPI:
             else:
                 # if any of the calls fails, we cannot be cannot be sure about the sensors in CommonSense
                 return None
-    
+
             if len(s) < 1000:
                 break
-    
+
             j += 1
-    
+
         return sensors
 
 
@@ -179,7 +179,7 @@ class SenseAPI:
             @return (string) - sensor_id of sensor or None if not found
         """
 
-        if device_type == None: 
+        if device_type == None:
             for sensor in sensors:
                 if sensor['name'] == sensor_name:
                     return sensor['id']
@@ -198,7 +198,7 @@ class SenseAPI:
         heads.update(headers)
         body = ''
         http_url = url
-        if self.__authentication__ == 'not_authenticated' and url == '/users.json' and method == 'POST':
+        if self.__authentication__ == 'not_authenticated' and (url == '/users.json' or url == '/users.json?disable_mail=1') and method == 'POST':
             heads.update({"Content-type": "application/json", "Accept":"*"})
             body = json.dumps(parameters)
         elif self.__authentication__ == 'not_authenticated':
@@ -1060,6 +1060,21 @@ class SenseAPI:
             self.__error__ = "api call unsuccessful"
             return False
 
+    def UsersChangePassword (self, current_password, new_password):
+        """
+            Change the password for the current user
+            
+            @param current_password (string) - md5 hash of the current password of the user
+            @param new_password (string) - md5 hash of the new password of the user (make sure to doublecheck!)
+            
+            @return (bool) - Boolean indicating whether ChangePassword was successful.
+        """
+        if self.__SenseApiCall__('/change_password', "POST", {"current_password":current_password, "new_password":new_password}):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
     def UsersDelete (self, user_id):
         """
             Delete user. 
@@ -1652,7 +1667,7 @@ class SenseAPI:
         else:
             self.__error__ = "api call unsuccessful"
             return False
-    
+
     def DomainAddUserPost_Parameters(self):
         return {'users': [{'id':'1'}]}
 
@@ -1749,6 +1764,13 @@ class SenseAPI:
             @return (bool) - Boolean indicating whether GroupsPost was successful.
         """
         if self.__SenseApiCall__('/dataprocessors/{id}.json'.format(id = dataProcessorId), 'DELETE'):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
+    def DataProcessorsPut(self, dataProcessorId, parameters):
+        if self.__SenseApiCall__('/dataprocessors/{id}.json'.format(id = dataProcessorId), 'PUT', parameters):
             return True
         else:
             self.__error__ = "api call unsuccessful"
