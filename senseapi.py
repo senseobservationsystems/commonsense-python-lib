@@ -798,24 +798,24 @@ class SenseAPI:
             self.__error__ = "api call unsuccessful"
             return False
 
-        def SensorsDataGet(self, sensorIds, parameters):
-                """
-                        Retrieve sensor data for the specified sensors from CommonSense.
-                        If SensorsDataGet is successful, the result can be obtained by a call to getResponse(), and should be a json string.
-                        
-                        @param sensorIds (list) a list of sensor ids to retrieve the data for
-                        @param parameters (dictionary) - Dictionary containing the parameters for the api call.
-                                        
-                        @return (bool) - Boolean indicating whether SensorsDataGet was successful.
-                """
-                if parameters is None:
-                        parameters = {}
-                parameters["sensor_id[]"] = sensorIds
-                if self.__SenseApiCall__('/sensors/data.json', 'GET', parameters = parameters):
-                        return True
-                else:
-                        self.__error__ = "api call unsuccessful"
-                        return False
+    def SensorsDataGet(self, sensorIds, parameters):
+        """
+            Retrieve sensor data for the specified sensors from CommonSense.
+            If SensorsDataGet is successful, the result can be obtained by a call to getResponse(), and should be a json string.
+
+            @param sensorIds (list) a list of sensor ids to retrieve the data for
+            @param parameters (dictionary) - Dictionary containing the parameters for the api call.
+
+            @return (bool) - Boolean indicating whether SensorsDataGet was successful.
+        """
+        if parameters is None:
+                parameters = {}
+        parameters["sensor_id[]"] = sensorIds
+        if self.__SenseApiCall__('/sensors/data.json', 'GET', parameters = parameters):
+                return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
 
 
     def SensorDataPost(self, sensor_id, parameters):
