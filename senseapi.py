@@ -1409,6 +1409,44 @@ class SenseAPI:
 #================
 # D E V I C E S =
 #================
+
+    def DevicesGet(self):
+        """
+            Retrieve all devices for the user.
+
+            @return (bool) - Boolean indicating whether DevicesGet was successful.
+        """
+        if self.__SenseApiCall__('/devices', 'GET', ):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
+    def DeviceGet(self, device_id):
+        """
+            Obtain details of a single device
+
+            @param device_id (int) - Device for which to obtain details
+        """
+
+    def DeviceSensorsGet_Parameters(self):
+        return {"page": 0, "per_page": 100, "details": "full"}
+
+    def DeviceSensorsGet(self, device_id, parameters):
+        """
+            Obtain a list of all sensors attached to a device.
+
+            @param device_id (int) - Device for which to retrieve sensors
+            @param parameters (dict) - Search parameters
+
+            @return (bool) - Boolean indicating whether DeviceSensorsGet was succesful.
+        """
+        if self.__SenseApiCall__('/devices/{0}/sensors.json'.format(device_id), 'GET', parameters = parameters):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
     def SensorAddToDevice_Parameters(self):
         return {'device':{'id':0, 'type':'', 'uuid':0}}
 
