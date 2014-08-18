@@ -1415,7 +1415,7 @@ class SenseAPI:
 
             @return (bool) - Boolean indicating whether DevicesGet was successful.
         """
-        if self.__SenseApiCall__('/devices', 'GET', ):
+        if self.__SenseApiCall__('/devices', 'GET'):
             return True
         else:
             self.__error__ = "api call unsuccessful"
@@ -1427,6 +1427,12 @@ class SenseAPI:
 
             @param device_id (int) - Device for which to obtain details
         """
+        if self.__SenseApiCall__('/devices/{0}'.format(device_id), 'GET'):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
 
     def DeviceSensorsGet_Parameters(self):
         return {"page": 0, "per_page": 100, "details": "full"}
