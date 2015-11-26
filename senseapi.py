@@ -541,6 +541,7 @@ class SenseAPI:
         if duration == 'forever':
             return 0
 
+
 #================
 # S E N S O R S =
 #================
@@ -1617,6 +1618,34 @@ class SenseAPI:
             self.__error__ = "api call unsuccessful"
             return False
 
+
+#================================
+#       Sharing Sensors         =
+#================================
+    def SensorShare(self, sensor_id, parameters):
+        """
+            Share a sensor with a user
+
+            @param sensor_id (int) - Id of sensor to be shared
+            @param parameters (dictionary) - Additional parameters for the call
+
+            @return (bool) - Boolean indicating whether the ShareSensor call was successful      
+        """
+
+        if not parameters['user']['id']:
+            parameters['user'].pop('id')
+
+        if not parameters['user']['username']:
+            parameters['user'].pop('username')
+
+        if self.__SenseApiCall__("/sensors/{0}/users".format(sensor_id), "POST", parameters = parameters):
+            return True
+        else:
+            self.__error__ = "api call unsuccessful"
+            return False
+
+    def SensorShare_Parameters(self):
+        return {'user': {'id': None, 'username': None}}
 
 #================================
 # G R O U P S  &  S E N S O R S =
