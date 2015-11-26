@@ -1622,30 +1622,30 @@ class SenseAPI:
 #================================
 #       Sharing Sensors         =
 #================================
-    def ShareSensor(self, sensor_id, commonsense_id = None, username = None):
+    def SensorShare(self, sensor_id, parameters):
         """
             Share a sensor with a user
 
             @param sensor_id (int) - Id of sensor to be shared
-            @param commonsense_id (int) - CommonSense id of user that the sensor will be shared with (Optional if provided username)
-            @param username (String) - Username of the user that the sensor will be shared with (Optional if provided commonsense_id)
+            @param parameters (dictionary) - Additional parameters for the call
 
             @return (bool) - Boolean indicating whether the ShareSensor call was successful      
         """
 
-        param = {'user': {}}
+        if not parameters['user']['id']:
+            parameters['user'].pop('id')
 
-        if commonsense_id != None:
-            param['user']['id'] = commonsense_id
+        if not parameters['user']['username']:
+            parameters['user'].pop('username')
 
-        if username != None:
-            param['user']['username'] = username
-
-        if self.__SenseApiCall__("/sensors/{0}/users".format(sensor_id), "POST", parameters = param):
+        if self.__SenseApiCall__("/sensors/{0}/users".format(sensor_id), "POST", parameters = parameters):
             return True
         else:
             self.__error__ = "api call unsuccessful"
             return False
+
+    def SensorShare_Parameters(self):
+        return {'user': {'id': None, 'username': None}}
 
 #================================
 # G R O U P S  &  S E N S O R S =
