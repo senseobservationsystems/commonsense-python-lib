@@ -1,6 +1,13 @@
 # Usage
 ## Credentials
-For using the tests a credential file is needed. Copy the credentials.txt_example file to credentials.txt and fill in the required field
+For using the tests a credential file is needed. Copy the credentials.txt_example file to credentials.txt and fill in the required fields.
+~~~
+{
+	"username":"",
+	"password":"",
+	"application_key":""
+}
+~~~  
 
 ## Data coverage
 The data coverage test file `dataCoverageTest.py` will preform a data coverage test for the sensors in the sensor profiles list with as source `sense-library` 
