@@ -45,24 +45,34 @@ class DataCoverage:
 			@param interval (int) the interval between the data points in milisecons
 			@return (float, float) The coverage percentage, a value between 0 and 1 and the average interval
 		"""
-		lastTime = 0
-		cnt = 0
+
+		# return 0 is there is no data
+		if len(sensorData) == 0:
+			return 0.0, 0.0
+			
+		# set the start and end time based on the specified times or sensor dat
+		if startTime == None:
+			startTime = sensorData[0]["time"]
+		if endTime == None:
+			endTime = sensorData[len(sensorData)-1]["time"]
+			
+		# create an array with bins for each interval step
+		intervalArray = [0] * (int(float(endTime-startTime)/float(interval))+1)
 		totalDelay = 0
+		lastTime = 0
+		# loop through the data and point a one in the interval bin if there is data 
 		for dataPoint in sensorData:
 			newTime = dataPoint['time']
-			if lastTime != 0:				
-				maxInterval = interval + interval*self.__leeyway__
-				minInterval = interval - interval*self.__leeyway__
-				delay = newTime - lastTime 
-				if delay > minInterval and delay < maxInterval:
-					cnt += 1
-				totalDelay += delay
+			index = int(float(newTime-startTime)/float(interval))
+			intervalArray[index] = 1
+			if lastTime != 0:
+				totalDelay += newTime-lastTime
 			lastTime = newTime
 		
+		# sum all the bins 
+		cnt = sum(intervalArray)
+		
 		expectedSize = self.__getExpectedDataCount__(sensorData, interval, startTime, endTime)
-		if expectedSize == 0:
-			return 0.0,0.0
-
 		averageInterval = float(totalDelay)/float(len(sensorData))
 		coverage = float(cnt)/float(expectedSize) 
 		return coverage, averageInterval

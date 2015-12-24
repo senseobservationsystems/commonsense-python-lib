@@ -54,7 +54,7 @@ if not api.AuthenticateSessionId(username, password_md5):
 # Set the data coverage settings
 dataCoverage = dataCoverage.DataCoverage()
 dataCoverage.setLeeway(0.5) # 50% of difference between the timing of data points is allowed
-dataCoverage.setSimpleCoverage(True) # we use the complex coverage with the leeway and comparing individual points
+dataCoverage.setSimpleCoverage(False) # we use the complex coverage with the leeway and comparing individual points
 
 # Get all the data for a sensor
 def getSensorData(sensorName, getParameters):
@@ -112,14 +112,16 @@ def printCoverage(sensorName, interval, start_time = globalStartTime, end_time =
     print "{:20} coverage: {:6}%   interval: {:<6} min".format(sensorName, round(coverage*100.0,2), round(avgInterval/60000.0, 2))
           
 # Coverage tests
-defaultSampleRate = 3 * 60 * 1000
+sampling3Minutes = 3 * 60 * 1000
+sampling5Minutes = 5 * 60 * 1000
+defaultSampleRate = sampling3Minutes
 printCoverage("noise", defaultSampleRate)
 printCoverage("accelerometer", defaultSampleRate)
 printCoverage("battery", defaultSampleRate)
 printCoverage("light", defaultSampleRate)
 printCoverage("position", defaultSampleRate)
 printCoverage("proximity", defaultSampleRate)
-printCoverage("sleep", defaultSampleRate)
+printCoverage("sleep", sampling5Minutes)
 printCoverage("sleep_estimate", defaultSampleRate)
 printCoverage("time_active", defaultSampleRate)
 
