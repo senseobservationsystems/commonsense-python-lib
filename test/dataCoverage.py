@@ -1,11 +1,11 @@
 class DataCoverage:
 	
 	def __init__(self):
-		self.__simpleCoverage__ = False
+		self.__isSimpleCoverage__ = False
 		self.__leeyway__ = 0.5
 		
 	def setSimpleCoverage(self, useSimpleCoverage):
-		self.__simpleCoverage__ = useSimpleCoverage
+		self.__isSimpleCoverage__ = useSimpleCoverage
 		
 	
 	def setLeeway(self, leeway):
@@ -25,7 +25,7 @@ class DataCoverage:
 		"""
 		expectedSize = self.__getExpectedDataCount__(sensorData, interval, startTime, endTime)
 		if expectedSize == 0:
-			return 0
+			return 0.0, 0.0
 		return float(len(sensorData))/float(expectedSize), 0.0
 	
 	def __getExpectedDataCount__ (self, sensorData, interval, startTime = None, endTime = None):
@@ -76,7 +76,7 @@ class DataCoverage:
 			@param interval the interval between the data points in milisecons
 			@return (float, float) The coverage percentage, a value between 0 and 1 and the average interval (average interval is 0.0 with simple coverage)
 		"""
-		if self.__simpleCoverage__:
+		if self.__isSimpleCoverage__:
 			return self.__simpleCoverage__(sensorData, interval, startTime, endTime)
 		else:
 			return self.__fullConverage__(sensorData, interval, startTime, endTime)

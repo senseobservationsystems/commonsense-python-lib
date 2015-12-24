@@ -11,13 +11,14 @@ sourceName = 'sense-library'
 globalStartTime = None
 globalEndTime = None
 
-if len(sys.argv) == 2:
+# get the command line arguments
+if len(sys.argv) >= 2:
     if (sys.argv[1] == "-h"):
         print "Usage: python dataCoverageTest.py [start time] [end time] #in epoch miliseconds"
         exit()
     else: 
         globalStartTime = long(sys.argv[1])
-if len(sys.argv) == 3:
+if len(sys.argv) >= 3:
     globalEndTime = long(sys.argv[2])
 
 # Get user credentials
@@ -52,9 +53,42 @@ if not api.AuthenticateSessionId(username, password_md5):
 
 # Set the data coverage settings
 dataCoverage = dataCoverage.DataCoverage()
-dataCoverage.setLeeway(0.5)
-dataCoverage.setSimpleCoverage(False)
+dataCoverage.setLeeway(0.5) # 50% of difference between the timing of data points is allowed
+dataCoverage.setSimpleCoverage(False) # we use the complex coverage with the leeway and comparing individual points
 
+# Get all the data for a sensor
+def getSensorData(sensorName, getParameters):
+    sensorData = []
+    lastTime = 0
+    while True:
+        # get data multiple times since there is a limit of 1000 points per call
+        if api.SensorDataGet(sourceName, sensorName, getParameters):
+            response = json.loads(api.getResponse())
+            dataArray = response['data']
+            # if there is no data then break, or if the last item is the same af previous round
+            if len(dataArray) == 0 or lastTime == dataArray[len(dataArray)-1]["time"]:
+                break
+                
+            # if this is the fist time then copy the whole response
+            if len(sensorData) == 0:
+                sensorData = dataArray
+            # else don't copy the first item since, it's inclusive from the previous call
+            else:
+                sensorData += dataArray[1:]
+                
+            # we got less then the limit so we can stop now
+            if len(dataArray) < 1000:
+                break
+                
+            # get the time of the last item in the list
+            lastTime = dataArray[len(dataArray)-1]["time"]
+            # use the lastTime to select a new start period and get max 1000 points again
+            getParameters['start_time'] = lastTime
+        else:
+            break
+    return sensorData
+
+# Print the data coverage
 def printCoverage(sensorName, interval, start_time = globalStartTime, end_time = globalEndTime):
     """
         Returns the data coverage for a specific sensor and a predefined sourceName
@@ -63,7 +97,7 @@ def printCoverage(sensorName, interval, start_time = globalStartTime, end_time =
         @return (float) The coverage percentage, a value between 0 and 1
          
     """
-    getParameters = {"sort":"ASC"}
+    getParameters = {"sort":"ASC", "limit":1000}
     if start_time != None:
         getParameters["start_time"] = start_time
     if end_time != None:
@@ -72,13 +106,13 @@ def printCoverage(sensorName, interval, start_time = globalStartTime, end_time =
     coverage = 0
     avgInterval = 0
     
-    if api.SensorDataGet(sourceName, sensorName, getParameters):
-        response = json.loads(api.getResponse())
-        coverage, avgInterval = dataCoverage.coverage(response["data"], interval, start_time, end_time)
+    # get all the sensor data
+    sensorData = getSensorData(sensorName, getParameters)
+    coverage, avgInterval = dataCoverage.coverage(sensorData, interval, start_time, end_time)
     print "{:20} coverage: {:6}%   interval: {:<6} min".format(sensorName, round(coverage*100.0,2), round(avgInterval/60000.0, 2))
           
 # Coverage tests
-defaultSampleRate = 5 * 60 * 1000
+defaultSampleRate = 3 * 60 * 1000
 printCoverage("noise", defaultSampleRate)
 printCoverage("accelerometer", defaultSampleRate)
 printCoverage("battery", defaultSampleRate)
