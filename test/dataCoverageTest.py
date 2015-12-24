@@ -54,7 +54,7 @@ if not api.AuthenticateSessionId(username, password_md5):
 # Set the data coverage settings
 dataCoverage = dataCoverage.DataCoverage()
 dataCoverage.setLeeway(0.5) # 50% of difference between the timing of data points is allowed
-dataCoverage.setSimpleCoverage(False) # we use the complex coverage with the leeway and comparing individual points
+dataCoverage.setSimpleCoverage(True) # we use the complex coverage with the leeway and comparing individual points
 
 # Get all the data for a sensor
 def getSensorData(sensorName, getParameters):
