@@ -13,9 +13,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import senseapi
 import json
 import string
+import sys
+
+sys.path.append('../')
+import senseapi
+
+#################################
+# THIS FILE NEEDS TO BE UPDATED #
+#################################
+print "This test script is not updated for the new sensor api..."
+exit()
 
 #####################
 # I M P O R T A N T #
