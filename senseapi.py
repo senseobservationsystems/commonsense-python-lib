@@ -215,7 +215,6 @@ class SenseAPI:
             self.__status__ = 418
             return False
 
-        print "connect to:{}".format(server_url)
         if self.__use_https__ and not self.__authentication__ == 'authenticating_oauth' and not self.__authentication__ == 'oauth':
             connection = httplib.HTTPSConnection(server_url, timeout = 60)
         else:
@@ -294,7 +293,6 @@ class SenseAPI:
         self.__setAuthenticationMethod__('authenticating_session_id')
 
         parameters = {'username':username, 'password':password}
-
         if self.__SenseApiCall__("/v1/login", "POST", parameters = parameters, authenticate = True):
             try:
                 response = json.loads(self.__response__)
