@@ -2,19 +2,9 @@ class DataCoverage:
 	
 	def __init__(self):
 		self.__isSimpleCoverage__ = False
-		self.__leeyway__ = 0.5
 		
 	def setSimpleCoverage(self, useSimpleCoverage):
 		self.__isSimpleCoverage__ = useSimpleCoverage
-		
-	
-	def setLeeway(self, leeway):
-		"""
-			Set the amount of leeway to use to count a data point to be within the iterval
-			This leeway value is not used when doing a simple coverage test. By default the leeway is 0.5 
-			@param leeway (float) the leeway in percentage, a value between 0 and 1 
-		"""
-		self.__leeyway__ = leeway
 		
 	def __simpleCoverage__(self, sensorData, interval, startTime = None, endTime = None):
 		"""
@@ -81,7 +71,7 @@ class DataCoverage:
 	def coverage(self, sensorData, interval, startTime = None, endTime = None):
 		"""
 			Calculates the coverage percentage
-			By default is does a full coverage test using the leeway
+			By default is does a full coverage test 
 			@param sensorData a JSON array with sensor data JSON objects
 			@param interval the interval between the data points in milisecons
 			@return (float, float) The coverage percentage, a value between 0 and 1 and the average interval (average interval is 0.0 with simple coverage)
